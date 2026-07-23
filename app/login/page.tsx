@@ -3,28 +3,26 @@
 export const dynamic = 'force-dynamic';
 
 import { useMsal } from '@azure/msal-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Suspense } from 'react';
 
 function LoginContent() {
-  const { instance, accounts } = useMsal();
+  const { instance, accounts, inProgress } = useMsal();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    if (code && accounts && accounts.length > 0) {
-      router.push('/dashboard');
-    } else if (accounts && accounts.length > 0) {
+    // Si l'utilisateur est connecté, redirect au dashboard
+    if (accounts && accounts.length > 0 && inProgress === 'none') {
       router.push('/dashboard');
     }
-  }, [accounts, router, searchParams]);
+  }, [accounts, inProgress, router]);
 
   const handleLogin = async () => {
     try {
       await instance.loginPopup({
         scopes: ['user.read'],
+        redirectUri: window.location.origin + '/login',
       });
     } catch (error) {
       console.error('Login error:', error);
@@ -37,6 +35,7 @@ function LoginContent() {
       <button onClick={handleLogin} style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}>
         Sign in with Azure AD
       </button>
+      {inProgress === 'login' && <p>Logging in...</p>}
     </div>
   );
 }
