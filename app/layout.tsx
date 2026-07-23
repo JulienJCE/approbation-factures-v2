@@ -1,5 +1,4 @@
 import './globals.css';
-import { Providers } from './providers';
 
 export const metadata = {
   title: 'Approbation Factures v2',
@@ -12,9 +11,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body>
-        <Providers>{children}</Providers>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
