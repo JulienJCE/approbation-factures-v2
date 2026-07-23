@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateDocument } from '@/lib/db';
+import { updateDocumentStatus } from '@/lib/db';
 import { sendApprovalEmail } from '@/lib/email';
 
 export async function POST(
@@ -11,7 +11,7 @@ export async function POST(
     const { status, approverName } = body;
 
     // Mettre à jour le document
-    const doc = await updateDocument(params.id, { status });
+    const doc = await updateDocumentStatus(params.id, status);
 
     // Envoyer l'email
     if (doc) {
