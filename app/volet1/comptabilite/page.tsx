@@ -1,82 +1,96 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Personne } from '@/lib/types';
+export const dynamic = 'force-dynamic';
 
-export default function Volet1Comptabilite() {
-  const [approuveurs, setApprobateurs] = useState<Personne[]>([]);
-  const [fileName, setFileName] = useState('');
-  const [selectedApprobateur, setSelectedApprobateur] = useState('');
-  const [dragActive, setDragActive] = useState(false);
+import { useState } from 'react';
+import Link from 'next/link';
 
-  useEffect(() => {
-    fetch('/api/approuveurs').then(r => r.json()).then(setApprobateurs);
-  }, []);
+export default function ComptabilitePage() {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState('');
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-    if (e.dataTransfer.files[0]) {
-      setFileName(e.dataTransfer.files[0].name);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFile(e.target.files[0]);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fileName || !selectedApprobateur) return;
-    
-    await fetch('/api/documents', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'invoice',
-        fileName,
-        approuveurId: selectedApprobateur,
-        volet: 1,
-      }),
-    });
-    
-    setFileName('');
-    setSelectedApprobateur('');
-    alert('Facture uploadée!');
+    if (!file) {
+      setMessage('Veuillez sélectionner un fichier');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'facture');
+      formData.append('volet', '1');
+      formData.append('fileName', file.name);
+
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        setMessage('✅ Facture uploadée avec succès!');
+        setFile(null);
+      } else {
+        setMessage('❌ Erreur lors de l\'upload');
+      }
+    } catch (error) {
+      setMessage('❌ Erreur: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Volet 1: Upload Facture</h2>
-      <div className="card p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div
-            onDragEnter={() => setDragActive(true)}
-            onDragLeave={() => setDragActive(false)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-8 text-center ${dragActive ? 'border-ce-blue bg-blue-50' : 'border-gray-300'}`}
-          >
-            <div className="text-4xl mb-2">📄</div>
-            <p className="font-medium text-gray-900">Glissez votre facture ici</p>
-            {fileName && <p className="text-sm text-green-600 mt-2">✓ {fileName}</p>}
-          </div>
+    <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+      <h1>Volet 1 - Upload Factures</h1>
+      
+      <form onSubmit={handleUpload} style={{ marginTop: '2rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+            Sélectionner une facture PDF:
+          </label>
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            disabled={uploading}
+            style={{ padding: '0.5rem' }}
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Approuveur</label>
-            <select
-              value={selectedApprobateur}
-              onChange={(e) => setSelectedApprobateur(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded"
-            >
-              <option value="">-- Sélectionner --</option>
-              {approuveurs.map((app) => (
-                <option key={app.id} value={app.id}>{app.nom}</option>
-              ))}
-            </select>
-          </div>
+        <button
+          type="submit"
+          disabled={uploading || !file}
+          style={{
+            padding: '0.75rem 1.5rem',
+            backgroundColor: uploading ? '#ccc' : '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: uploading ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {uploading ? 'Upload en cours...' : 'Upload'}
+        </button>
+      </form>
 
-          <button type="submit" className="btn btn-primary w-full">Upload Facture</button>
-        </form>
-      </div>
-      <div className="mt-6">
-        <a href="/" className="text-ce-blue">← Retour</a>
+      {message && (
+        <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>
+          {message}
+        </div>
+      )}
+
+      <div style={{ marginTop: '2rem' }}>
+        <Link href="/dashboard">← Retour au Dashboard</Link>
       </div>
     </div>
   );

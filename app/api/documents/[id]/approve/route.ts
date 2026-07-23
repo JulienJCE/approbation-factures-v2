@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateDocumentStatus, getDocumentById } from '@/lib/db';
+import { updateDocument } from '@/lib/db';
+import { sendApprovalEmail } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -7,34 +8,25 @@ export async function POST(
 ) {
   try {
     const body = await request.json();
-    const { status } = body;
+    const { status, approverName } = body;
 
-    if (!status || !['approved', 'rejected'].includes(status)) {
-      return NextResponse.json(
-        { error: 'Statut invalide' },
-        { status: 400 }
+    // Mettre à jour le document
+    const doc = await updateDocument(params.id, { status });
+
+    // Envoyer l'email
+    if (doc) {
+      await sendApprovalEmail(
+        'notification@conteneursexperts.com',
+        doc.fileName,
+        status,
+        approverName || 'Admin'
       );
     }
 
-    const doc = await getDocumentById(params.id);
-    if (!doc) {
-      return NextResponse.json(
-        { error: 'Document non trouvé' },
-        { status: 404 }
-      );
-    }
-
-    const updated = await updateDocumentStatus(
-      params.id,
-      status,
-      status === 'approved' ? new Date() : undefined
-    );
-
-    return NextResponse.json(updated);
+    return NextResponse.json({ success: true, document: doc });
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du document:', error);
     return NextResponse.json(
-      { error: 'Impossible de mettre à jour le document' },
+      { error: 'Approval failed' },
       { status: 500 }
     );
   }
