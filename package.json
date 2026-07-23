@@ -11,7 +11,6 @@
   "dependencies": {
     "@azure/msal-browser": "^5.17.1",
     "@azure/msal-react": "^5.5.3",
-    "@microsoft/msgraph-client": "^3.0.7",
     "next": "^14.0.0",
     "postgres": "^3.4.9",
     "react": "^18.2.0",
