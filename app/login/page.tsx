@@ -2,32 +2,42 @@
 
 export const dynamic = 'force-dynamic';
 
+import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 
 function LoginContent() {
-  const handleLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID;
-    const tenantId = process.env.NEXT_PUBLIC_AZURE_TENANT_ID;
-    const redirectUri = `${window.location.origin}/auth/callback`;
+  const router = useRouter();
+
+  const handleTestLogin = () => {
+    // Sauvegarder un user de test en sessionStorage
+    sessionStorage.setItem('user', JSON.stringify({
+      id: 'test-user-123',
+      name: 'Test User',
+      email: 'test@conteneursexperts.com',
+      role: 'admin'
+    }));
     
-    if (!clientId || !tenantId) {
-      console.error('Missing Azure config');
-      return;
-    }
-    
-    const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=user.read`;
-    
-    window.location.href = authUrl;
+    // Rediriger au dashboard
+    router.push('/dashboard');
   };
 
   return (
     <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h1>Login</h1>
+      <h1>Approbation Factures v2</h1>
+      <p>Version de test</p>
       <button 
-        onClick={handleLogin} 
-        style={{ padding: '0.5rem 1rem', fontSize: '1rem', cursor: 'pointer' }}
+        onClick={handleTestLogin} 
+        style={{ 
+          padding: '0.75rem 1.5rem', 
+          fontSize: '1rem', 
+          cursor: 'pointer',
+          backgroundColor: '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px'
+        }}
       >
-        Sign in with Azure AD
+        Se connecter (Mode Test)
       </button>
     </div>
   );
