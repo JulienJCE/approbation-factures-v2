@@ -1,5 +1,3 @@
-import { Client } from '@microsoft/msgraph-client';
-
 export async function sendApprovalEmail(
   recipientEmail: string,
   documentName: string,
@@ -7,8 +5,12 @@ export async function sendApprovalEmail(
   approverName: string
 ) {
   try {
-    // Configuration minimale pour test
-    console.log(`📧 Email sent to ${recipientEmail}: ${documentName} - ${status}`);
+    // Log pour debug - à remplacer par Microsoft Graph plus tard
+    console.log(`📧 Email notification sent to ${recipientEmail}`);
+    console.log(`   Document: ${documentName}`);
+    console.log(`   Status: ${status}`);
+    console.log(`   Approver: ${approverName}`);
+    
     return true;
   } catch (error) {
     console.error('Email error:', error);
