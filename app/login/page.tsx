@@ -12,8 +12,8 @@ function LoginContent() {
   const router = useRouter();
 
   useEffect(() => {
-    // Si l'utilisateur est connecté, redirect au dashboard
     if (accounts && accounts.length > 0 && inProgress === 'none') {
+      console.log('✅ User authenticated, redirecting to dashboard');
       router.push('/dashboard');
     }
   }, [accounts, inProgress, router]);
@@ -22,7 +22,6 @@ function LoginContent() {
     try {
       await instance.loginPopup({
         scopes: ['user.read'],
-        redirectUri: window.location.origin + '/login',
       });
     } catch (error) {
       console.error('Login error:', error);
@@ -35,7 +34,7 @@ function LoginContent() {
       <button onClick={handleLogin} style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}>
         Sign in with Azure AD
       </button>
-      {inProgress && inProgress !== 'none' && <p>Logging in...</p>}
+      {inProgress && inProgress !== 'none' && <p>Authenticating...</p>}
     </div>
   );
 }
