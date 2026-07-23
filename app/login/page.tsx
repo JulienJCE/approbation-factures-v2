@@ -5,20 +5,18 @@ export const dynamic = 'force-dynamic';
 import { useMsal } from '@azure/msal-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginContent() {
   const { instance, accounts } = useMsal();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Si le code d'auth est dans l'URL, on est déjà authentifié
     const code = searchParams.get('code');
     if (code && accounts && accounts.length > 0) {
-      // Redirect au dashboard
       router.push('/dashboard');
     } else if (accounts && accounts.length > 0) {
-      // Déjà connecté
       router.push('/dashboard');
     }
   }, [accounts, router, searchParams]);
@@ -40,5 +38,13 @@ export default function LoginPage() {
         Sign in with Azure AD
       </button>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
