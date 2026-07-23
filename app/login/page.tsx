@@ -35,7 +35,7 @@ function LoginContent() {
       <button onClick={handleLogin} style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}>
         Sign in with Azure AD
       </button>
-      {inProgress === 'login' && <p>Logging in...</p>}
+      {inProgress && inProgress !== 'none' && <p>Logging in...</p>}
     </div>
   );
 }
