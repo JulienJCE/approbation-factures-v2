@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       type: type as 'visa' | 'invoice',
       fileName,
       approuveurId: finalApprouveurId,
-      volet: parseInt(volet),
+      volet: parseInt(volet) as 1 | 2,
       visaCode,
     });
 
