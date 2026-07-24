@@ -70,7 +70,7 @@ export default function ComptabilitePage() {
         }, 2000);
       } else {
         const data = await response.json();
-        setMessage('❌ Erreur: ' + (data.error || 'Erreur lors de l\'upload'));
+        setMessage('❌ Erreur: ' + (data.details || data.error || 'Erreur lors de l\'upload'));
       }
     } catch (error) {
       setMessage('❌ Erreur: ' + (error instanceof Error ? error.message : 'Unknown error'));
