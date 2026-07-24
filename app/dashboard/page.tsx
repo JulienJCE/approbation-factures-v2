@@ -10,12 +10,12 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
   const handleLogout = () => {
     sessionStorage.removeItem('user');
     router.push('/login');
   };
-
-  useEffect(() => {
     // Vérifier le user de test
     const userStr = sessionStorage.getItem('user');
     if (!userStr) {
