@@ -91,6 +91,30 @@ export default function Dashboard() {
           >
             📝 Visa Dépenses (Volet 2)
           </Link>
+          <Link 
+            href="/approbateur"
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#6f42c1',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px'
+            }}
+          >
+            ✅ Approbation
+          </Link>
+          <Link 
+            href="/notifications"
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#fd7e14',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px'
+            }}
+          >
+            🔔 Mes notifications
+          </Link>
         </div>
       </div>
 
