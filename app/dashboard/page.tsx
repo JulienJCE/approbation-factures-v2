@@ -23,12 +23,10 @@ export default function Dashboard() {
     const currentUser = JSON.parse(userStr);
     setUser(currentUser);
 
-    // Charger les documents
-    fetch('/api/documents')
-      .then(r => r.json())
-      .then(setDocuments)
-      .catch(err => console.error('Error loading documents:', err))
-      .finally(() => setLoading(false));
+    // Charger les documents: d'abord sessionStorage (uploads), puis API (DB)
+    const uploads = JSON.parse(sessionStorage.getItem('uploads') || '[]');
+    setDocuments(uploads);
+    setLoading(false);
   }, [router]);
 
   if (!user) return <div>Loading...</div>;

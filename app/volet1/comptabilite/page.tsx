@@ -4,11 +4,13 @@ export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function ComptabilitePage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
+  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -27,7 +29,7 @@ export default function ComptabilitePage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('type', 'facture');
+      formData.append('type', 'invoice');
       formData.append('volet', '1');
       formData.append('fileName', file.name);
 
@@ -37,8 +39,27 @@ export default function ComptabilitePage() {
       });
 
       if (response.ok) {
+        const doc = await response.json();
+        
+        // Sauvegarder en sessionStorage aussi
+        const uploads = JSON.parse(sessionStorage.getItem('uploads') || '[]');
+        uploads.push({
+          id: Math.random().toString(),
+          fileName: file.name,
+          type: 'invoice',
+          volet: 1,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        });
+        sessionStorage.setItem('uploads', JSON.stringify(uploads));
+        
         setMessage('✅ Facture uploadée avec succès!');
         setFile(null);
+        
+        // Rediriger au dashboard après 2 sec
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
       } else {
         setMessage('❌ Erreur lors de l\'upload');
       }
