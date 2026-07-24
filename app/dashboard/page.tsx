@@ -10,7 +10,10 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const handleLogout = () => {
+    sessionStorage.removeItem('user');
+    router.push('/login');
+  };
 
   useEffect(() => {
     // Vérifier le user de test
@@ -33,10 +36,25 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <div style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc', paddingBottom: '1rem' }}>
-        <h1>Dashboard</h1>
-        <p>Bienvenue, {user.name}</p>
-        <p style={{ fontSize: '0.9rem', color: '#666' }}>{user.email}</p>
+      <div style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1>Dashboard</h1>
+          <p>Bienvenue, {user.name}</p>
+          <p style={{ fontSize: '0.9rem', color: '#666' }}>{user.email}</p>
+        </div>
+        <button 
+          onClick={handleLogout}
+          style={{
+            padding: '0.5rem 1rem',
+            backgroundColor: '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          🚪 Logout
+        </button>
       </div>
 
       <div style={{ marginBottom: '2rem' }}>
