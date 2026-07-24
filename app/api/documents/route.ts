@@ -5,13 +5,13 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const type = formData.get('type') as string;
+    const type = (formData.get('type') as string) || 'invoice';
     const fileName = formData.get('fileName') as string;
     const volet = formData.get('volet') as string;
     const visaCode = formData.get('visaCode') as string;
     const approuveurId = formData.get('approuveurId') as string;
 
-    if (!type || !fileName || !volet) {
+    if (!fileName || !volet) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 });
     }
 
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const doc = await createDocument({
-      type,
+      type: type as 'visa' | 'invoice',
       fileName,
       approuveurId: finalApprouveurId,
       volet: parseInt(volet),
