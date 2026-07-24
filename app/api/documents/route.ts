@@ -3,13 +3,19 @@ import { createDocument, getDocuments, isValidVisaCode, getVisaRouting } from '@
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { type, fileName, approuveurId, volet, visaCode } = body;
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const type = formData.get('type') as string;
+    const fileName = formData.get('fileName') as string;
+    const volet = formData.get('volet') as string;
+    const visaCode = formData.get('visaCode') as string;
+    const approuveurId = formData.get('approuveurId') as string;
 
     if (!type || !fileName || !volet) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 });
     }
 
+    // Traiter le fichier (pour l'instant, juste sauvegarder les métadonnées)
     let finalApprouveurId = approuveurId;
     if (type === 'visa') {
       if (!visaCode || !isValidVisaCode(visaCode)) {
@@ -23,13 +29,14 @@ export async function POST(request: NextRequest) {
       type,
       fileName,
       approuveurId: finalApprouveurId,
-      volet,
+      volet: parseInt(volet),
       visaCode,
     });
 
     return NextResponse.json(doc, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Erreur creation' }, { status: 500 });
+    console.error('Upload error:', error);
+    return NextResponse.json({ error: 'Erreur creation', details: String(error) }, { status: 500 });
   }
 }
 
