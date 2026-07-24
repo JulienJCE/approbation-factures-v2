@@ -78,7 +78,7 @@ export async function createDocument(data: { type: 'invoice' | 'visa'; fileName:
     }
   }
 
-  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${'/'}, ${JSON.stringify(stampsApplied)}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
+  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${'/'}, ${db.array(stampsApplied)}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
   return rowToDocument(result[0]);
 }
 
