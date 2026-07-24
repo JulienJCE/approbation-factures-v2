@@ -16,6 +16,6 @@ export async function GET() {
   } catch (error) {
     await db.end();
     console.error('Erreur notifications:', error);
-    return NextResponse.json([], { status: 200 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

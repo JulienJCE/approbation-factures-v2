@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 
 interface Notification {
   id: string;
+  document_id: string;
   file_name: string;
   subject: string;
   doc_status: string;
@@ -17,6 +18,7 @@ interface Notification {
 export default function NotificationsPage() {
   const [user, setUser] = useState<any>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -30,8 +32,14 @@ export default function NotificationsPage() {
 
     fetch('/api/notifications')
       .then(r => r.json())
-      .then(setNotifications)
-      .catch(err => console.error('Erreur:', err))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setNotifications(data);
+        } else {
+          setErrorMsg(data.error || 'Erreur inconnue');
+        }
+      })
+      .catch(err => setErrorMsg(String(err)))
       .finally(() => setLoading(false));
   }, [router]);
 
@@ -42,10 +50,16 @@ export default function NotificationsPage() {
       <h1>Mes notifications</h1>
       <p style={{ color: '#666' }}>Confirmations d'approbation et de rejet</p>
 
+      {errorMsg && (
+        <div style={{ margin: '1rem 0', padding: '1rem', backgroundColor: '#fee', color: '#c00', borderRadius: '4px' }}>
+          ❌ {errorMsg}
+        </div>
+      )}
+
       <div style={{ marginTop: '1.5rem' }}>
         {loading ? (
           <p>Chargement...</p>
-        ) : notifications.length === 0 ? (
+        ) : notifications.length === 0 && !errorMsg ? (
           <p>Aucune notification pour le moment.</p>
         ) : (
           notifications.map((n) => (
@@ -59,7 +73,9 @@ export default function NotificationsPage() {
                 backgroundColor: n.doc_status === 'approved' ? '#f0fff4' : '#fff5f5',
               }}
             >
-              <p style={{ fontWeight: 'bold', margin: 0 }}>{n.subject}</p>
+              <Link href={`/documents/${n.document_id}`} target="_blank" style={{ fontWeight: 'bold', color: '#333', textDecoration: 'none' }}>
+                {n.subject}
+              </Link>
               <p style={{ fontSize: '0.85rem', color: '#666', margin: '0.25rem 0 0 0' }}>
                 {new Date(n.sent_at).toLocaleString('fr-CA')}
               </p>

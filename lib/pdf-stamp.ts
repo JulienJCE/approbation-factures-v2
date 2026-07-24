@@ -29,18 +29,73 @@ const STAMP_CONFIGS: Record<string, StampConfig> = {
   },
 };
 
+import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
+
 export async function applyStamp(
-  pdfPath: string,
+  pdfBytes: Uint8Array | ArrayBuffer,
   stampType: 'visa' | 'approved',
   approverName?: string,
   timestamp?: Date
-): Promise<Buffer> {
+): Promise<Uint8Array> {
   const config = STAMP_CONFIGS[stampType];
-  console.log(`Applying ${stampType} stamp to ${pdfPath}`);
-  if (approverName) console.log(`Approver: ${approverName}`);
-  if (timestamp) console.log(`Timestamp: ${timestamp.toISOString()}`);
-  console.log(`Config:`, config);
-  return Buffer.from('');
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const smallFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const pages = pdfDoc.getPages();
+
+  const lines = config.text.split('\n');
+  const color = rgb(config.color.r / 255, config.color.g / 255, config.color.b / 255);
+
+  for (const page of pages) {
+    const { width, height } = page.getSize();
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Bordure (cercle approximé par un carré tourné, simple et fiable)
+    if (config.border) {
+      page.drawRectangle({
+        x: centerX - 130,
+        y: centerY - 90,
+        width: 260,
+        height: 180,
+        borderColor: color,
+        borderWidth: 3,
+        borderOpacity: config.opacity,
+        rotate: degrees(config.rotation),
+      });
+    }
+
+    // Texte principal (multi-lignes)
+    lines.forEach((line, i) => {
+      const textWidth = font.widthOfTextAtSize(line, config.fontSize);
+      page.drawText(line, {
+        x: centerX - textWidth / 2,
+        y: centerY + (lines.length / 2 - i - 0.5) * (config.fontSize * 0.9),
+        size: config.fontSize,
+        font,
+        color,
+        opacity: config.opacity,
+        rotate: degrees(config.rotation),
+      });
+    });
+
+    // Détails (approbateur + date) pour le tampon "approved"
+    if (stampType === 'approved' && approverName && timestamp) {
+      const detailText = `${approverName} - ${timestamp.toLocaleDateString('fr-CA')} ${timestamp.toLocaleTimeString('fr-CA')}`;
+      const detailWidth = smallFont.widthOfTextAtSize(detailText, 10);
+      page.drawText(detailText, {
+        x: centerX - detailWidth / 2,
+        y: centerY - 70,
+        size: 10,
+        font: smallFont,
+        color,
+        opacity: config.opacity + 0.2,
+        rotate: degrees(config.rotation),
+      });
+    }
+  }
+
+  return await pdfDoc.save();
 }
 
 export function getStampsToApply(

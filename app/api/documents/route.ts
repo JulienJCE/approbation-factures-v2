@@ -15,6 +15,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 });
     }
 
+    // Encoder le fichier en base64 pour stockage en DB
+    let pdfData: string | undefined;
+    if (file) {
+      const bytes = await file.arrayBuffer();
+      pdfData = Buffer.from(bytes).toString('base64');
+    }
+
     // Traiter le fichier (pour l'instant, juste sauvegarder les métadonnées)
     let finalApprouveurId = approuveurId;
     if (type === 'visa') {
@@ -31,6 +38,7 @@ export async function POST(request: NextRequest) {
       approuveurId: finalApprouveurId,
       volet: parseInt(volet) as 1 | 2,
       visaCode,
+      pdfData,
     });
 
     return NextResponse.json(doc, { status: 201 });

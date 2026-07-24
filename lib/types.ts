@@ -18,6 +18,8 @@ export interface Document {
   approuveurId: string;
   visaCode?: string;
   pdfUrl: string;
+  pdfData?: string;
+  pdfDataStamped?: string;
   createdAt: Date;
   updatedAt: Date;
   approvedAt?: Date;

@@ -49,11 +49,17 @@ export default function ApprobateurPage() {
         body: JSON.stringify({ status, approverName: user?.name || 'Approbateur' }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        setActionMessage(status === 'approved' ? '✅ Document approuvé! Notification envoyée.' : '❌ Document rejeté. Notification envoyée.');
+        let msg = status === 'approved' ? '✅ Document approuvé!' : '❌ Document rejeté.';
+        msg += data.emailLogged ? ' Notification envoyée.' : ' ⚠️ Notification NON envoyée';
+        if (data.emailError) msg += ` (${data.emailError})`;
+        if (data.stampError) msg += ` ⚠️ Tampon non appliqué: ${data.stampError}`;
+        setActionMessage(msg);
         loadDocuments();
       } else {
-        setActionMessage('❌ Erreur lors du traitement');
+        setActionMessage('❌ Erreur: ' + (data.details || data.error || 'Erreur lors du traitement'));
       }
     } catch (error) {
       setActionMessage('❌ Erreur: ' + (error instanceof Error ? error.message : 'Unknown'));
@@ -95,7 +101,13 @@ export default function ApprobateurPage() {
               }}
             >
               <div>
-                <p style={{ fontWeight: 'bold', margin: 0 }}>{doc.fileName}</p>
+                <Link
+                  href={`/documents/${doc.id}`}
+                  target="_blank"
+                  style={{ fontWeight: 'bold', margin: 0, color: '#007bff', textDecoration: 'underline' }}
+                >
+                  📄 {doc.fileName}
+                </Link>
                 <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>
                   Type: {doc.type} · {new Date(doc.createdAt).toLocaleString('fr-CA')}
                 </p>
