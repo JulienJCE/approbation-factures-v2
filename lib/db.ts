@@ -136,11 +136,16 @@ export async function updateDocumentStatus(id: string, status: DocumentStatus, a
   return rowToDocument(result[0]);
 }
 
-export async function logEmail(data: { to: string; subject: string; approuveurId: string; documentId: string; status: 'sent' | 'failed' }): Promise<JournalCourriel> {
-  const now = new Date();
-  const result = await db`INSERT INTO journal_courriels (document_id, approuveur_id, to_email, subject, status, sent_at) VALUES (${data.documentId}, ${data.approuveurId}, ${data.to}, ${data.subject}, ${data.status}, ${now}) RETURNING *`;
-  const row = result[0];
-  return { id: row.id, to: row.to_email, subject: row.subject, approuveurId: row.approuveur_id, documentId: row.document_id, status: row.status, sentAt: new Date(row.sent_at) };
+export async function logEmail(data: { to: string; subject: string; approuveurId: string; documentId: string; status: 'sent' | 'failed' }): Promise<JournalCourriel | null> {
+  try {
+    const now = new Date();
+    const result = await db`INSERT INTO journal_courriels (document_id, approuveur_id, to_email, subject, status, sent_at) VALUES (${data.documentId}, ${data.approuveurId}, ${data.to}, ${data.subject}, ${data.status}, ${now}) RETURNING *`;
+    const row = result[0];
+    return { id: row.id, to: row.to_email, subject: row.subject, approuveurId: row.approuveur_id, documentId: row.document_id, status: row.status, sentAt: new Date(row.sent_at) };
+  } catch (error) {
+    console.error('DB error logging email:', error);
+    return null;
+  }
 }
 
 export async function getEmailsForDocument(documentId: string): Promise<JournalCourriel[]> {
