@@ -16,6 +16,8 @@ export default function Dashboard() {
     sessionStorage.removeItem('user');
     router.push('/login');
   };
+
+  useEffect(() => {
     // Vérifier le user de test
     const userStr = sessionStorage.getItem('user');
     if (!userStr) {
