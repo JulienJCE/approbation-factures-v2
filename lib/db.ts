@@ -118,7 +118,7 @@ export async function updateDocumentStatus(id: string, status: DocumentStatus, a
 }
 
 export async function saveStampedPdfUrl(id: string, pdfUrlStamped: string): Promise<void> {
-  await db`UPDATE documents SET pdf_url_stamped = ${pdfUrlStamped} WHERE id = ${id}`;
+  await db.unsafe(`UPDATE documents SET pdf_url_stamped = $1 WHERE id = $2`, [pdfUrlStamped, id]);
 }
 
 export async function logEmail(data: { to: string; subject: string; approuveurId: string; documentId: string; status: 'sent' | 'failed' }): Promise<JournalCourriel | null> {
