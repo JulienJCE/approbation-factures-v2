@@ -73,7 +73,7 @@ export default function NotificationsPage() {
                 backgroundColor: n.doc_status === 'approved' ? '#f0fff4' : '#fff5f5',
               }}
             >
-              <Link href={`/documents/${n.document_id}`} target="_blank" style={{ fontWeight: 'bold', color: '#333', textDecoration: 'none' }}>
+              <Link href={`/documents/${n.document_id}`} style={{ fontWeight: 'bold', color: '#333', textDecoration: 'none' }}>
                 {n.subject}
               </Link>
               <p style={{ fontSize: '0.85rem', color: '#666', margin: '0.25rem 0 0 0' }}>

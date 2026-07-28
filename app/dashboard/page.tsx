@@ -137,7 +137,7 @@ export default function Dashboard() {
               {documents.slice(0, 5).map((doc: any) => (
                 <tr key={doc.id} style={{ borderBottom: '1px solid #eee' }}>
                   <td style={{ padding: '0.5rem' }}>
-                    <Link href={`/documents/${doc.id}`} target="_blank" style={{ color: '#007bff' }}>
+                    <Link href={`/documents/${doc.id}`} style={{ color: '#007bff' }}>
                       {doc.fileName}
                     </Link>
                   </td>

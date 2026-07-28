@@ -103,7 +103,7 @@ export default function ApprobateurPage() {
               <div>
                 <Link
                   href={`/documents/${doc.id}`}
-                  target="_blank"
+                 
                   style={{ fontWeight: 'bold', margin: 0, color: '#007bff', textDecoration: 'underline' }}
                 >
                   📄 {doc.fileName}
