@@ -53,7 +53,7 @@ export default function ApprobateurPage() {
 
       if (response.ok) {
         let msg = status === 'approved' ? '✅ Document approuvé!' : '❌ Document rejeté.';
-        msg += data.emailLogged ? ' Notification envoyée.' : ' ⚠️ Notification NON envoyée';
+        msg += data.emailSent ? ' 📧 Courriel envoyé à la comptabilité.' : ' ⚠️ Courriel NON envoyé';
         if (data.emailError) msg += ` (${data.emailError})`;
         if (data.stampError) msg += ` ⚠️ Tampon non appliqué: ${data.stampError}`;
         setActionMessage(msg);

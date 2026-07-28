@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateDocumentStatus, logEmail, getDocumentById, saveStampedPdfUrl } from '@/lib/db';
 import { applyStamp } from '@/lib/pdf-stamp';
+import { sendApprovalEmail } from '@/lib/email';
 import { put } from '@vercel/blob';
+
+// Adresse email de la comptabilité qui reçoit les notifications
+const COMPTA_EMAIL = process.env.COMPTA_EMAIL || 'julien.j@conteneursexperts.com';
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +21,7 @@ export async function POST(
     // Mettre à jour le statut
     const doc = await updateDocumentStatus(params.id, status, status === 'approved' ? new Date() : undefined);
 
-    let emailLogged = false;
+    let emailSent = false;
     let emailError: string | null = null;
     let stampError: string | null = null;
     let stampedUrl: string | null = null;
@@ -25,12 +29,10 @@ export async function POST(
     // Appliquer le tampon visuel sur le PDF si approuvé
     if (doc && status === 'approved' && original?.pdfUrl) {
       try {
-        // Télécharger le PDF original depuis Blob
         const pdfRes = await fetch(original.pdfUrl);
         if (!pdfRes.ok) throw new Error(`Fetch PDF failed: ${pdfRes.status}`);
         const pdfBytes = await pdfRes.arrayBuffer();
 
-        // Appliquer le tampon
         const stampedBytes = await applyStamp(
           pdfBytes,
           'approved',
@@ -38,7 +40,6 @@ export async function POST(
           new Date()
         );
 
-        // Uploader la version tamponnée vers Blob
         const stampedName = `stamped/${Date.now()}-${original.fileName}`;
         const blob = await put(stampedName, Buffer.from(stampedBytes), {
           access: 'public',
@@ -46,7 +47,6 @@ export async function POST(
         });
         stampedUrl = blob.url;
 
-        // Sauvegarder l'URL en DB
         await saveStampedPdfUrl(params.id, stampedUrl);
       } catch (err) {
         stampError = String(err);
@@ -54,28 +54,47 @@ export async function POST(
       }
     }
 
-    // Enregistrer la notification
+    // Envoyer le vrai email + logguer
     if (doc) {
-      const subject = status === 'approved'
-        ? `Facture approuvée: ${doc.fileName}`
-        : `Facture rejetée: ${doc.fileName}`;
-
       try {
-        const logged = await logEmail({
-          to: 'comptabilite@conteneursexperts.com',
-          subject,
+        // URL à inclure dans l'email: version tamponnée si dispo, sinon original
+        const emailPdfUrl = stampedUrl || original?.pdfUrl;
+
+        const emailResult = await sendApprovalEmail(
+          COMPTA_EMAIL,
+          doc.fileName,
+          status,
+          approverName || 'Approbateur',
+          emailPdfUrl || undefined
+        );
+
+        emailSent = emailResult.ok;
+        if (!emailResult.ok) emailError = emailResult.error || 'Unknown';
+
+        // Logguer aussi en DB pour la page notifications
+        await logEmail({
+          to: COMPTA_EMAIL,
+          subject: status === 'approved'
+            ? `Facture approuvée: ${doc.fileName}`
+            : `Facture rejetée: ${doc.fileName}`,
           approuveurId: doc.approuveurId,
           documentId: doc.id,
-          status: 'sent',
+          status: emailResult.ok ? 'sent' : 'failed',
         });
-        emailLogged = logged !== null;
       } catch (err) {
         emailError = String(err);
-        console.error('Email log error:', err);
+        console.error('Email error:', err);
       }
     }
 
-    return NextResponse.json({ success: true, document: doc, emailLogged, emailError, stampError, stampedUrl });
+    return NextResponse.json({
+      success: true,
+      document: doc,
+      emailSent,
+      emailError,
+      stampError,
+      stampedUrl,
+    });
   } catch (error) {
     console.error('Approve error:', error);
     return NextResponse.json(
