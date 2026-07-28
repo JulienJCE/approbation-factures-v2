@@ -46,7 +46,10 @@ export async function applyStamp(
   const lines = config.text.split('\n');
   const color = rgb(config.color.r / 255, config.color.g / 255, config.color.b / 255);
 
-  for (const page of pages) {
+  // Tampon uniquement sur la première page
+  const firstPage = pages[0];
+  if (firstPage) {
+    const page = firstPage;
     const { width, height } = page.getSize();
     const centerX = width / 2;
     const centerY = height / 2;
