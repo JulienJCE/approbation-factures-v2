@@ -66,6 +66,21 @@ export default function DocumentViewerPage() {
       </div>
 
       <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        {pdfUrl && (
+          <a
+            href={pdfUrl}
+            download={doc.fileName}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#28a745',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px',
+            }}
+          >
+            ⬇ Télécharger le PDF
+          </a>
+        )}
         <Link
           href="/approbateur"
           style={{
