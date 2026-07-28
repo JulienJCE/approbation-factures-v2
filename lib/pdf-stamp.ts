@@ -54,13 +54,13 @@ export async function applyStamp(
     const centerX = width / 2;
     const centerY = height / 2;
 
-    // Bordure plus compacte englobant texte principal ET nom+date
+    // Bordure allongée horizontalement, plus courte verticalement (comme sur dessin)
     if (config.border) {
       page.drawRectangle({
-        x: centerX - 280,
-        y: centerY - 35,
-        width: 560,
-        height: 90,
+        x: centerX - 320,
+        y: centerY - 28,
+        width: 640,
+        height: 75,
         borderColor: color,
         borderWidth: 3,
         borderOpacity: config.opacity,
