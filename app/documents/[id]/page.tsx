@@ -42,15 +42,15 @@ export default function DocumentViewerPage() {
   if (!user || loading) return <div style={{ padding: '2rem' }}>Chargement...</div>;
   if (!doc) return <div style={{ padding: '2rem' }}>Document introuvable.</div>;
 
-  // Préférer le PDF tamponné s'il existe, sinon l'original
-  const pdfUrl = doc.pdfUrlStamped || doc.pdfUrl;
+  // pdf_url contient soit l'original, soit la version tamponnée si le doc est approuvé
+  const pdfUrl = doc.pdfUrl;
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
       <h1>{doc.fileName}</h1>
       <p style={{ color: '#666' }}>
         Statut: <strong>{doc.status}</strong>
-        {doc.pdfUrlStamped && ' · Version approuvée avec tampon'}
+        {doc.status === 'approved' && ' · Version approuvée avec tampon'}
       </p>
 
       <div style={{ marginTop: '1.5rem' }}>

@@ -118,13 +118,8 @@ export async function updateDocumentStatus(id: string, status: DocumentStatus, a
 }
 
 export async function saveStampedPdfUrl(id: string, pdfUrlStamped: string): Promise<void> {
-  // Utiliser une nouvelle connexion isolée pour bypass le cache de schéma de Neon
-  const freshDb = postgres(process.env.DATABASE_URL!, { max: 1, prepare: false, connection: { application_name: 'stamp-updater' } });
-  try {
-    await freshDb.unsafe(`UPDATE documents SET pdf_url_stamped = $1 WHERE id = $2`, [pdfUrlStamped, id]);
-  } finally {
-    await freshDb.end();
-  }
+  // Écraser pdf_url avec la version tamponnée (évite d'avoir besoin d'une colonne séparée)
+  await db`UPDATE documents SET pdf_url = ${pdfUrlStamped} WHERE id = ${id}`;
 }
 
 export async function logEmail(data: { to: string; subject: string; approuveurId: string; documentId: string; status: 'sent' | 'failed' }): Promise<JournalCourriel | null> {
