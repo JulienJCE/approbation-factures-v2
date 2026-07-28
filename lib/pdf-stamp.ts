@@ -57,9 +57,9 @@ export async function applyStamp(
     // Bordure plus compacte englobant texte principal ET nom+date
     if (config.border) {
       page.drawRectangle({
-        x: centerX - 240,
+        x: centerX - 280,
         y: centerY - 35,
-        width: 480,
+        width: 560,
         height: 90,
         borderColor: color,
         borderWidth: 3,
