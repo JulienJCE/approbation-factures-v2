@@ -65,8 +65,31 @@ export default function DocumentViewerPage() {
         )}
       </div>
 
-      <div style={{ marginTop: '1.5rem' }}>
-        <Link href="/dashboard">← Retour au Dashboard</Link>
+      <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <Link
+          href="/approbateur"
+          style={{
+            padding: '0.5rem 1rem',
+            backgroundColor: '#6f42c1',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '4px',
+          }}
+        >
+          ← Retour à l'approbation
+        </Link>
+        <Link
+          href="/dashboard"
+          style={{
+            padding: '0.5rem 1rem',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '4px',
+          }}
+        >
+          Dashboard
+        </Link>
       </div>
     </div>
   );
