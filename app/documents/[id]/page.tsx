@@ -11,8 +11,8 @@ interface DocumentDetail {
   fileName: string;
   type: string;
   status: string;
-  pdfData?: string;
-  pdfDataStamped?: string;
+  pdfUrl?: string;
+  pdfUrlStamped?: string;
   createdAt: string;
 }
 
@@ -42,16 +42,15 @@ export default function DocumentViewerPage() {
   if (!user || loading) return <div style={{ padding: '2rem' }}>Chargement...</div>;
   if (!doc) return <div style={{ padding: '2rem' }}>Document introuvable.</div>;
 
-  // Préférer le PDF tamponné s'il existe (document approuvé), sinon l'original
-  const pdfSource = doc.pdfDataStamped || doc.pdfData;
-  const pdfUrl = pdfSource ? `data:application/pdf;base64,${pdfSource}` : null;
+  // Préférer le PDF tamponné s'il existe, sinon l'original
+  const pdfUrl = doc.pdfUrlStamped || doc.pdfUrl;
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
       <h1>{doc.fileName}</h1>
       <p style={{ color: '#666' }}>
         Statut: <strong>{doc.status}</strong>
-        {doc.pdfDataStamped && ' · Version approuvée avec tampon'}
+        {doc.pdfUrlStamped && ' · Version approuvée avec tampon'}
       </p>
 
       <div style={{ marginTop: '1.5rem' }}>

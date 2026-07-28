@@ -18,9 +18,8 @@ export async function GET() {
         status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
         approuveur_id VARCHAR(50) NOT NULL,
         visa_code VARCHAR(50),
-        pdf_url VARCHAR(512),
-        pdf_data TEXT,
-        pdf_data_stamped TEXT,
+        pdf_url VARCHAR(1024),
+        pdf_url_stamped VARCHAR(1024),
         stamps_applied TEXT[],
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -43,7 +42,7 @@ export async function GET() {
     // Vérifier immédiatement
     const check = await db`
       SELECT column_name FROM information_schema.columns
-      WHERE table_name = 'documents' AND column_name IN ('pdf_data', 'pdf_data_stamped')
+      WHERE table_name = 'documents' AND column_name IN ('pdf_url', 'pdf_url_stamped')
     `;
     const count = await db`SELECT COUNT(*) as n FROM documents`;
     const dbInfo = await db`

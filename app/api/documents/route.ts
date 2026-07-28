@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createDocument, getDocuments, isValidVisaCode, getVisaRouting } from '@/lib/db';
+import { put } from '@vercel/blob';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,14 +16,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 });
     }
 
-    // Encoder le fichier en base64 pour stockage en DB
-    let pdfData: string | undefined;
+    // Uploader le PDF vers Vercel Blob
+    let pdfUrl: string | undefined;
     if (file) {
-      const bytes = await file.arrayBuffer();
-      pdfData = Buffer.from(bytes).toString('base64');
+      const uniqueName = `originals/${Date.now()}-${fileName}`;
+      const blob = await put(uniqueName, file, {
+        access: 'public',
+        contentType: 'application/pdf',
+      });
+      pdfUrl = blob.url;
     }
 
-    // Traiter le fichier (pour l'instant, juste sauvegarder les métadonnées)
+    // Traitement du routage visa
     let finalApprouveurId = approuveurId;
     if (type === 'visa') {
       if (!visaCode || !isValidVisaCode(visaCode)) {
@@ -38,7 +43,7 @@ export async function POST(request: NextRequest) {
       approuveurId: finalApprouveurId,
       volet: parseInt(volet) as 1 | 2,
       visaCode,
-      pdfData,
+      pdfUrl,
     });
 
     return NextResponse.json(doc, { status: 201 });

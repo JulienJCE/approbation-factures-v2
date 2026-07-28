@@ -17,9 +17,8 @@ export interface Document {
   status: DocumentStatus;
   approuveurId: string;
   visaCode?: string;
-  pdfUrl: string;
-  pdfData?: string;
-  pdfDataStamped?: string;
+  pdfUrl?: string;
+  pdfUrlStamped?: string;
   createdAt: Date;
   updatedAt: Date;
   approvedAt?: Date;

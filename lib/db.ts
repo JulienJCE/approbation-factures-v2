@@ -39,8 +39,7 @@ function rowToDocument(row: any): Document {
     approuveurId: row.approuveur_id,
     visaCode: row.visa_code,
     pdfUrl: row.pdf_url,
-    pdfData: row.pdf_data,
-    pdfDataStamped: row.pdf_data_stamped,
+    pdfUrlStamped: row.pdf_url_stamped,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     approvedAt: row.approved_at ? new Date(row.approved_at) : undefined,
@@ -64,7 +63,7 @@ export async function getPersonneByEmail(email: string): Promise<Personne | null
   return personnes.find(p => p.email === email) || null;
 }
 
-export async function createDocument(data: { type: 'invoice' | 'visa'; fileName: string; approuveurId: string; volet: 1 | 2; visaCode?: string; pdfData?: string }): Promise<Document> {
+export async function createDocument(data: { type: 'invoice' | 'visa'; fileName: string; approuveurId: string; volet: 1 | 2; visaCode?: string; pdfUrl?: string }): Promise<Document> {
   const now = new Date();
   const visaRouting = data.visaCode ? routageVisa[data.visaCode as keyof typeof routageVisa] : null;
   const stampsApplied: string[] = [];
@@ -80,7 +79,7 @@ export async function createDocument(data: { type: 'invoice' | 'visa'; fileName:
     }
   }
 
-  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, pdf_data, stamps_applied, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${'/'}, ${data.pdfData || null}, ${db.array(stampsApplied)}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
+  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${data.pdfUrl || null}, ${db.array(stampsApplied)}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
   return rowToDocument(result[0]);
 }
 
@@ -93,22 +92,20 @@ export async function getDocumentById(id: string): Promise<Document | null> {
 export async function getDocuments(filters?: { volet?: number; status?: string }): Promise<Document[]> {
   try {
     let result;
-    const cols = db`id, type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, created_at, updated_at, approved_at`;
     
     if (filters?.volet && filters?.status) {
-      result = await db`SELECT ${cols} FROM documents WHERE volet = ${filters.volet} AND status = ${filters.status} ORDER BY created_at DESC`;
+      result = await db`SELECT * FROM documents WHERE volet = ${filters.volet} AND status = ${filters.status} ORDER BY created_at DESC`;
     } else if (filters?.volet) {
-      result = await db`SELECT ${cols} FROM documents WHERE volet = ${filters.volet} ORDER BY created_at DESC`;
+      result = await db`SELECT * FROM documents WHERE volet = ${filters.volet} ORDER BY created_at DESC`;
     } else if (filters?.status) {
-      result = await db`SELECT ${cols} FROM documents WHERE status = ${filters.status} ORDER BY created_at DESC`;
+      result = await db`SELECT * FROM documents WHERE status = ${filters.status} ORDER BY created_at DESC`;
     } else {
-      result = await db`SELECT ${cols} FROM documents ORDER BY created_at DESC`;
+      result = await db`SELECT * FROM documents ORDER BY created_at DESC`;
     }
     
     return result.map(rowToDocument);
   } catch (error) {
     console.error('DB error fetching documents:', error);
-    // Fallback: retourner array vide
     return [];
   }
 }
@@ -120,8 +117,8 @@ export async function updateDocumentStatus(id: string, status: DocumentStatus, a
   return rowToDocument(result[0]);
 }
 
-export async function saveStampedPdf(id: string, pdfDataStamped: string): Promise<void> {
-  await db`UPDATE documents SET pdf_data_stamped = ${pdfDataStamped} WHERE id = ${id}`;
+export async function saveStampedPdfUrl(id: string, pdfUrlStamped: string): Promise<void> {
+  await db`UPDATE documents SET pdf_url_stamped = ${pdfUrlStamped} WHERE id = ${id}`;
 }
 
 export async function logEmail(data: { to: string; subject: string; approuveurId: string; documentId: string; status: 'sent' | 'failed' }): Promise<JournalCourriel | null> {

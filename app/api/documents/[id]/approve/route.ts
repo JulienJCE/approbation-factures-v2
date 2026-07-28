@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateDocumentStatus, logEmail, getDocumentById, saveStampedPdf } from '@/lib/db';
+import { updateDocumentStatus, logEmail, getDocumentById, saveStampedPdfUrl } from '@/lib/db';
 import { applyStamp } from '@/lib/pdf-stamp';
+import { put } from '@vercel/blob';
 
 export async function POST(
   request: NextRequest,
@@ -10,7 +11,7 @@ export async function POST(
     const body = await request.json();
     const { status, approverName } = body;
 
-    // Récupérer le document original (avec le PDF)
+    // Récupérer le document original (avec URL Blob)
     const original = await getDocumentById(params.id);
 
     // Mettre à jour le statut
@@ -19,26 +20,41 @@ export async function POST(
     let emailLogged = false;
     let emailError: string | null = null;
     let stampError: string | null = null;
+    let stampedUrl: string | null = null;
 
-    // Appliquer le tampon visuel sur le PDF si approuvé et qu'on a le fichier original
-    if (doc && status === 'approved' && original?.pdfData) {
+    // Appliquer le tampon visuel sur le PDF si approuvé
+    if (doc && status === 'approved' && original?.pdfUrl) {
       try {
-        const pdfBytes = Buffer.from(original.pdfData, 'base64');
+        // Télécharger le PDF original depuis Blob
+        const pdfRes = await fetch(original.pdfUrl);
+        if (!pdfRes.ok) throw new Error(`Fetch PDF failed: ${pdfRes.status}`);
+        const pdfBytes = await pdfRes.arrayBuffer();
+
+        // Appliquer le tampon
         const stampedBytes = await applyStamp(
           pdfBytes,
           'approved',
           approverName || 'Approbateur',
           new Date()
         );
-        const stampedBase64 = Buffer.from(stampedBytes).toString('base64');
-        await saveStampedPdf(params.id, stampedBase64);
+
+        // Uploader la version tamponnée vers Blob
+        const stampedName = `stamped/${Date.now()}-${original.fileName}`;
+        const blob = await put(stampedName, Buffer.from(stampedBytes), {
+          access: 'public',
+          contentType: 'application/pdf',
+        });
+        stampedUrl = blob.url;
+
+        // Sauvegarder l'URL en DB
+        await saveStampedPdfUrl(params.id, stampedUrl);
       } catch (err) {
         stampError = String(err);
         console.error('Stamp error:', err);
       }
     }
 
-    // Enregistrer la notification (visible dans "Mes notifications" pour la comptabilité)
+    // Enregistrer la notification
     if (doc) {
       const subject = status === 'approved'
         ? `Facture approuvée: ${doc.fileName}`
@@ -59,7 +75,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ success: true, document: doc, emailLogged, emailError, stampError });
+    return NextResponse.json({ success: true, document: doc, emailLogged, emailError, stampError, stampedUrl });
   } catch (error) {
     console.error('Approve error:', error);
     return NextResponse.json(
