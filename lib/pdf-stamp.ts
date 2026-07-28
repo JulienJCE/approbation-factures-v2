@@ -58,9 +58,9 @@ export async function applyStamp(
     if (config.border) {
       page.drawRectangle({
         x: centerX - 260,
-        y: centerY - 55,
+        y: centerY - 80,
         width: 520,
-        height: 110,
+        height: 135,
         borderColor: color,
         borderWidth: 3,
         borderOpacity: config.opacity,
@@ -73,7 +73,7 @@ export async function applyStamp(
     const textWidth = font.widthOfTextAtSize(line, config.fontSize);
     page.drawText(line, {
       x: centerX - textWidth / 2,
-      y: centerY - config.fontSize / 3,
+      y: centerY - config.fontSize / 3 + 12,
       size: config.fontSize,
       font,
       color,
@@ -87,7 +87,7 @@ export async function applyStamp(
       const detailWidth = smallFont.widthOfTextAtSize(detailText, 11);
       page.drawText(detailText, {
         x: centerX - detailWidth / 2,
-        y: centerY - config.fontSize / 3 - 25,
+        y: centerY - config.fontSize / 3 - 20,
         size: 11,
         font: smallFont,
         color,
