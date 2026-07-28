@@ -10,8 +10,11 @@ export async function GET() {
       WHERE table_name = 'documents'
       ORDER BY ordinal_position
     `;
+    const dbInfo = await db`
+      SELECT current_database() as db, current_user as user, inet_server_addr() as host
+    `;
     await db.end();
-    return NextResponse.json({ columns });
+    return NextResponse.json({ columns, dbInfo: dbInfo[0] });
   } catch (error) {
     await db.end();
     return NextResponse.json({ error: String(error) }, { status: 500 });

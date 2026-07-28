@@ -15,7 +15,10 @@ export async function GET() {
         SELECT column_name FROM information_schema.columns
         WHERE table_name = 'documents' AND column_name IN ('pdf_data', 'pdf_data_stamped')
       `;
-      return check;
+      const dbInfo = await tx`
+        SELECT current_database() as db, current_user as user, inet_server_addr() as host
+      `;
+      return { check, dbInfo: dbInfo[0] };
     });
 
     await db.end();
@@ -23,7 +26,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Migration terminee',
-      columnsFound: result
+      columnsFound: result.check,
+      dbInfo: result.dbInfo
     });
   } catch (error) {
     await db.end();
