@@ -21,10 +21,10 @@ const STAMP_CONFIGS: Record<string, StampConfig> = {
   approved: {
     type: 'approved',
     color: { r: 197, g: 80, b: 79 },
-    text: 'APPROUVÉ\nPOUR\nPAIEMENT',
-    fontSize: 36,
-    rotation: -45,
-    opacity: 0.3,
+    text: 'APPROUVÉ POUR PAIEMENT',
+    fontSize: 32,
+    rotation: -30,
+    opacity: 0.35,
     border: true,
   },
 };
@@ -54,13 +54,13 @@ export async function applyStamp(
     const centerX = width / 2;
     const centerY = height / 2;
 
-    // Bordure (cercle approximé par un carré tourné, simple et fiable)
+    // Bordure elliptique/rectangulaire adaptée au texte
     if (config.border) {
       page.drawRectangle({
-        x: centerX - 130,
-        y: centerY - 90,
-        width: 260,
-        height: 180,
+        x: centerX - 200,
+        y: centerY - 45,
+        width: 400,
+        height: 90,
         borderColor: color,
         borderWidth: 3,
         borderOpacity: config.opacity,
@@ -68,29 +68,27 @@ export async function applyStamp(
       });
     }
 
-    // Texte principal (multi-lignes)
-    const lineHeight = config.fontSize * 1.3;
-    lines.forEach((line, i) => {
-      const textWidth = font.widthOfTextAtSize(line, config.fontSize);
-      page.drawText(line, {
-        x: centerX - textWidth / 2,
-        y: centerY + (lines.length / 2 - i - 0.5) * lineHeight,
-        size: config.fontSize,
-        font,
-        color,
-        opacity: config.opacity,
-        rotate: degrees(config.rotation),
-      });
+    // Texte principal (une seule ligne maintenant)
+    const line = config.text;
+    const textWidth = font.widthOfTextAtSize(line, config.fontSize);
+    page.drawText(line, {
+      x: centerX - textWidth / 2,
+      y: centerY - config.fontSize / 3,
+      size: config.fontSize,
+      font,
+      color,
+      opacity: config.opacity,
+      rotate: degrees(config.rotation),
     });
 
-    // Détails (approbateur + date) pour le tampon "approved"
+    // Détails (approbateur + date) pour le tampon "approved" - placés en-dessous
     if (stampType === 'approved' && approverName && timestamp) {
-      const detailText = `${approverName} - ${timestamp.toLocaleDateString('fr-CA')} ${timestamp.toLocaleTimeString('fr-CA')}`;
-      const detailWidth = smallFont.widthOfTextAtSize(detailText, 10);
+      const detailText = `${approverName} · ${timestamp.toLocaleDateString('fr-CA')}`;
+      const detailWidth = smallFont.widthOfTextAtSize(detailText, 11);
       page.drawText(detailText, {
         x: centerX - detailWidth / 2,
-        y: centerY - 70,
-        size: 10,
+        y: centerY - config.fontSize / 3 - 25,
+        size: 11,
         font: smallFont,
         color,
         opacity: config.opacity + 0.2,
