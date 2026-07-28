@@ -1,7 +1,7 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Approbation Factures v2',
+  title: 'Approbation de Factures Conteneurs Experts',
 };
 
 export default function RootLayout({

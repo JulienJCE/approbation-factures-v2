@@ -65,7 +65,7 @@ function LoginContent() {
         width: '100%',
         maxWidth: '400px'
       }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Approbation Factures v2</h1>
+        <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Approbation de Factures Conteneurs Experts</h1>
         
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '1rem' }}>
