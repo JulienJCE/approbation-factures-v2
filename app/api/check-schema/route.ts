@@ -4,10 +4,13 @@ import postgres from 'postgres';
 export async function GET() {
   const db = postgres(process.env.DATABASE_URL!);
   try {
+    // Forcer un refresh du cache de schéma en tapant sur la table d'abord
+    await db`SELECT id FROM documents LIMIT 1`;
+    
     const columns = await db`
       SELECT column_name, data_type
       FROM information_schema.columns
-      WHERE table_name = 'documents'
+      WHERE table_schema = 'public' AND table_name = 'documents'
       ORDER BY ordinal_position
     `;
     const dbInfo = await db`
