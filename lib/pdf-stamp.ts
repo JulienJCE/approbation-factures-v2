@@ -54,13 +54,13 @@ export async function applyStamp(
     const centerX = width / 2;
     const centerY = height / 2;
 
-    // Bordure elliptique/rectangulaire adaptée au texte
+    // Bordure plus compacte englobant texte principal ET nom+date
     if (config.border) {
       page.drawRectangle({
-        x: centerX - 260,
-        y: centerY - 80,
-        width: 520,
-        height: 135,
+        x: centerX - 240,
+        y: centerY - 35,
+        width: 480,
+        height: 90,
         borderColor: color,
         borderWidth: 3,
         borderOpacity: config.opacity,
@@ -68,12 +68,12 @@ export async function applyStamp(
       });
     }
 
-    // Texte principal (une seule ligne maintenant)
+    // Texte principal - remonté pour laisser place au nom en dessous
     const line = config.text;
     const textWidth = font.widthOfTextAtSize(line, config.fontSize);
     page.drawText(line, {
       x: centerX - textWidth / 2,
-      y: centerY - config.fontSize / 3 + 12,
+      y: centerY + 5,
       size: config.fontSize,
       font,
       color,
@@ -81,14 +81,14 @@ export async function applyStamp(
       rotate: degrees(config.rotation),
     });
 
-    // Détails (approbateur + date) pour le tampon "approved" - placés en-dessous
+    // Détails (approbateur + date) - juste en-dessous du texte principal, dans le cadre
     if (stampType === 'approved' && approverName && timestamp) {
       const detailText = `${approverName} · ${timestamp.toLocaleDateString('fr-CA')}`;
-      const detailWidth = smallFont.widthOfTextAtSize(detailText, 11);
+      const detailWidth = smallFont.widthOfTextAtSize(detailText, 12);
       page.drawText(detailText, {
         x: centerX - detailWidth / 2,
-        y: centerY - config.fontSize / 3 - 20,
-        size: 11,
+        y: centerY - 20,
+        size: 12,
         font: smallFont,
         color,
         opacity: config.opacity + 0.2,
