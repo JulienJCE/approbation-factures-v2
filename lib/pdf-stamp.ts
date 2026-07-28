@@ -25,7 +25,7 @@ const STAMP_CONFIGS: Record<string, StampConfig> = {
     fontSize: 32,
     rotation: -30,
     opacity: 0.35,
-    border: true,
+    border: false,
   },
 };
 
