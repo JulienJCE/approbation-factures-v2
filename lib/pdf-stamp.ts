@@ -22,7 +22,7 @@ const STAMP_CONFIGS: Record<string, StampConfig> = {
     type: 'approved',
     color: { r: 197, g: 80, b: 79 },
     text: 'APPROUVÉ\nPOUR\nPAIEMENT',
-    fontSize: 48,
+    fontSize: 36,
     rotation: -45,
     opacity: 0.3,
     border: true,
@@ -69,11 +69,12 @@ export async function applyStamp(
     }
 
     // Texte principal (multi-lignes)
+    const lineHeight = config.fontSize * 1.3;
     lines.forEach((line, i) => {
       const textWidth = font.widthOfTextAtSize(line, config.fontSize);
       page.drawText(line, {
         x: centerX - textWidth / 2,
-        y: centerY + (lines.length / 2 - i - 0.5) * (config.fontSize * 0.9),
+        y: centerY + (lines.length / 2 - i - 0.5) * lineHeight,
         size: config.fontSize,
         font,
         color,
