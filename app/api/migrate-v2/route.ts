@@ -45,13 +45,19 @@ export async function GET() {
       SELECT column_name FROM information_schema.columns
       WHERE table_name = 'documents' AND column_name IN ('pdf_data', 'pdf_data_stamped')
     `;
+    const count = await db`SELECT COUNT(*) as n FROM documents`;
+    const dbInfo = await db`
+      SELECT current_database() as db, current_user as user, inet_server_addr() as host, current_setting('cluster_name', true) as cluster
+    `;
 
     await db.end();
 
     return NextResponse.json({
       success: true,
       message: 'Tables recreees avec les colonnes PDF!',
-      columnsFound: check
+      columnsFound: check,
+      docCount: count[0].n,
+      dbInfo: dbInfo[0]
     });
   } catch (error) {
     await db.end();

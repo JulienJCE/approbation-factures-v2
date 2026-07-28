@@ -11,10 +11,12 @@ export async function GET() {
       ORDER BY ordinal_position
     `;
     const dbInfo = await db`
-      SELECT current_database() as db, current_user as user, inet_server_addr() as host
+      SELECT current_database() as db, current_user as user, inet_server_addr() as host, current_setting('cluster_name', true) as cluster
     `;
+    // Compter les documents pour voir si c'est la même table
+    const count = await db`SELECT COUNT(*) as n FROM documents`;
     await db.end();
-    return NextResponse.json({ columns, dbInfo: dbInfo[0] });
+    return NextResponse.json({ columns, dbInfo: dbInfo[0], docCount: count[0].n });
   } catch (error) {
     await db.end();
     return NextResponse.json({ error: String(error) }, { status: 500 });
