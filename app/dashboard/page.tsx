@@ -46,19 +46,34 @@ export default function Dashboard() {
           <p>Bienvenue, {user.name}</p>
           <p style={{ fontSize: '0.9rem', color: '#666' }}>{user.email}</p>
         </div>
-        <button 
-          onClick={handleLogout}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#dc3545',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          🚪 Logout
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <Link
+            href="/change-password"
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px',
+              fontSize: '0.9rem',
+            }}
+          >
+            🔑 Mot de passe
+          </Link>
+          <button 
+            onClick={handleLogout}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            🚪 Logout
+          </button>
+        </div>
       </div>
 
       <div style={{ marginBottom: '2rem' }}>

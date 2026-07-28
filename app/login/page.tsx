@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 
 function LoginContent() {
-  const [email, setEmail] = useState('julien@conteneursexperts.com');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -36,8 +36,12 @@ function LoginContent() {
       // Sauvegarder en sessionStorage
       sessionStorage.setItem('user', JSON.stringify(user));
       
-      // Rediriger
-      router.push('/dashboard');
+      // Si le mot de passe temporaire n'a pas encore été changé, forcer le changement
+      if (user.mustChangePassword) {
+        router.push('/change-password');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       setError('Erreur: ' + (err instanceof Error ? err.message : 'Unknown'));
     } finally {
@@ -133,19 +137,6 @@ function LoginContent() {
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
-
-        <div style={{
-          marginTop: '1.5rem',
-          padding: '1rem',
-          backgroundColor: '#f9f9f9',
-          borderRadius: '4px',
-          fontSize: '0.85rem',
-          color: '#666'
-        }}>
-          <p><strong>Utilisateur de test:</strong></p>
-          <p>Email: julien@conteneursexperts.com</p>
-          <p>Mot de passe: 123456</p>
-        </div>
       </div>
     </div>
   );
