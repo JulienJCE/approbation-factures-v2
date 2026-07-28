@@ -57,10 +57,10 @@ export async function applyStamp(
     // Bordure elliptique/rectangulaire adaptée au texte
     if (config.border) {
       page.drawRectangle({
-        x: centerX - 200,
-        y: centerY - 45,
-        width: 400,
-        height: 90,
+        x: centerX - 260,
+        y: centerY - 55,
+        width: 520,
+        height: 110,
         borderColor: color,
         borderWidth: 3,
         borderOpacity: config.opacity,
