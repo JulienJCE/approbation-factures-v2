@@ -10,12 +10,12 @@ const db = postgres(process.env.DATABASE_URL!);
 
 const personnes: Personne[] = [
   { id: '1', nom: 'Julien Jacques', email: 'julien.j@conteneursexperts.com', role: 'approuveur' },
-  { id: '2', nom: 'Emre Keskin', email: 'emre.k@contoneursexperts.com', role: 'approuveur' },
+  { id: '2', nom: 'Emre Keskin', email: 'emre.k@conteneursexperts.com', role: 'approuveur' },
   { id: '3', nom: 'Pierjean Savard', email: 'pierjean@conteneursexperts.com', role: 'approuveur' },
   { id: '4', nom: 'Patrick Parent', email: 'patrick.p@conteneursexperts.com', role: 'approuveur' },
   { id: '5', nom: 'Michel Villeneuve', email: 'michel.v@conteneursexperts.com', role: 'approuveur' },
   { id: '6', nom: 'Karine Fournelle', email: 'karine@conteneursexperts.com', role: 'approuveur' },
-  { id: '7', nom: 'Franco Di Chiccio', email: 'franco.d@contoneursexperts.com', role: 'approuveur' },
+  { id: '7', nom: 'Franco Di Chiccio', email: 'franco.d@conteneursexperts.com', role: 'approuveur' },
   { id: '8', nom: 'Yanick Tremblay', email: 'yanick.t@conteneursexperts.com', role: 'employe_visa' },
   { id: '9', nom: 'Marco Chappadeau', email: 'marco.c@conteneursexperts.com', role: 'employe_visa' },
   { id: '10', nom: 'Eric Cloutier', email: 'eric.c@conteneursexperts.com', role: 'employe_visa' },

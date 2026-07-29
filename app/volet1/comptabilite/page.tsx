@@ -49,12 +49,16 @@ export default function ComptabilitePage() {
 
     setUploading(true);
     try {
+      const userStr = sessionStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('type', 'invoice');
       formData.append('volet', '1');
       formData.append('fileName', file.name);
       formData.append('approuveurId', approuveurId);
+      formData.append('uploadedBy', currentUser?.name || 'Comptabilité');
 
       const response = await fetch('/api/documents', {
         method: 'POST',
@@ -62,12 +66,16 @@ export default function ComptabilitePage() {
       });
 
       if (response.ok) {
-        setMessage('✅ Facture envoyée à l\'approbateur avec succès!');
+        const data = await response.json();
+        let msg = '✅ Facture envoyée à l\'approbateur avec succès!';
+        if (data.requestEmailSent) msg += ' 📧 Notification envoyée à l\'approbateur.';
+        else if (data.requestEmailError) msg += ` ⚠️ Email non envoyé (${data.requestEmailError})`;
+        setMessage(msg);
         setFile(null);
 
         setTimeout(() => {
           router.push('/dashboard');
-        }, 2000);
+        }, 2500);
       } else {
         const data = await response.json();
         setMessage('❌ Erreur: ' + (data.details || data.error || 'Erreur lors de l\'upload'));

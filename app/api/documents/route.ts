@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDocument, getDocuments, isValidVisaCode, getVisaRouting } from '@/lib/db';
+import { createDocument, getDocuments, isValidVisaCode, getVisaRouting, getPersonneById } from '@/lib/db';
 import { put } from '@vercel/blob';
+import { sendApprovalRequestEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,7 @@ export async function POST(request: NextRequest) {
     const volet = formData.get('volet') as string;
     const visaCode = formData.get('visaCode') as string;
     const approuveurId = formData.get('approuveurId') as string;
+    const uploadedBy = (formData.get('uploadedBy') as string) || 'Comptabilité';
 
     if (!fileName || !volet) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 });
@@ -46,7 +48,28 @@ export async function POST(request: NextRequest) {
       pdfUrl,
     });
 
-    return NextResponse.json(doc, { status: 201 });
+    // Envoyer un email à l'approbateur pour l'aviser (sauf si auto-approuvé)
+    let requestEmailSent = false;
+    let requestEmailError: string | null = null;
+
+    if (doc.status === 'pending') {
+      const approbateur = await getPersonneById(finalApprouveurId);
+      if (approbateur) {
+        const emailResult = await sendApprovalRequestEmail(
+          approbateur.email,
+          approbateur.nom,
+          fileName,
+          uploadedBy,
+          pdfUrl
+        );
+        requestEmailSent = emailResult.ok;
+        requestEmailError = emailResult.error || null;
+      } else {
+        requestEmailError = 'Approbateur introuvable';
+      }
+    }
+
+    return NextResponse.json({ ...doc, requestEmailSent, requestEmailError }, { status: 201 });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json({ error: 'Erreur creation', details: String(error) }, { status: 500 });

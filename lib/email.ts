@@ -106,3 +106,45 @@ export async function sendApprovalEmail(
     return { ok: false, error: String(error) };
   }
 }
+
+// Email envoyé à l'approbateur quand une nouvelle facture arrive pour lui
+export async function sendApprovalRequestEmail(
+  approverEmail: string,
+  approverName: string,
+  documentName: string,
+  uploadedBy: string,
+  pdfUrl?: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #6f42c1;">📋 Nouvelle facture à approuver</h2>
+        <p>Bonjour ${approverName},</p>
+        <p>Une nouvelle facture a été soumise pour votre approbation par <strong>${uploadedBy}</strong>.</p>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>Document:</strong> ${documentName}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Date de soumission:</strong> ${new Date().toLocaleString('fr-CA', { timeZone: 'America/Toronto' })}</p>
+        </div>
+        <p><a href="https://approbation-factures-v2.vercel.app/approbateur" style="display: inline-block; background: #6f42c1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-top: 10px; font-weight: bold;">✅ Approuver la facture</a></p>
+        ${pdfUrl ? `<p style="margin-top: 15px;"><a href="${pdfUrl}" style="color: #007bff;">📄 Prévisualiser le document</a></p>` : ''}
+        <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;">
+        <p style="font-size: 12px; color: #666;">Ce courriel a été envoyé automatiquement par le système d'approbation Conteneurs Experts.</p>
+      </div>
+    `;
+
+    const result = await resend.emails.send({
+      from: 'Approbation Factures <onboarding@resend.dev>',
+      to: approverEmail,
+      subject: `📋 Nouvelle facture à approuver: ${documentName}`,
+      html,
+    });
+
+    if (result.error) {
+      return { ok: false, error: JSON.stringify(result.error) };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error('Approval request email error:', error);
+    return { ok: false, error: String(error) };
+  }
+}
