@@ -15,7 +15,6 @@ function generateSafePassword(): string {
   return `${adj}${ani}${num}`;
 }
 
-// Liste connue des utilisateurs — on passe pas par SELECT pour éviter le cache Neon
 const KNOWN_USERS = [
   { email: 'julien.j@conteneursexperts.com', name: 'Julien Jacques' },
   { email: 'emre.k@conteneursexperts.com', name: 'Emre Keskin' },
@@ -32,10 +31,15 @@ export async function GET() {
   const db = postgres(process.env.DATABASE_URL!, { max: 1, prepare: false });
 
   try {
-    // D'abord corriger l'email de Christine si besoin
-    await db`UPDATE users SET email = 'payables@conteneursexperts.com' WHERE email = 'payable@conteneursexperts.com'`;
+    // DIAGNOSTIC: voir ce que cette connexion voit
+    const diag = await db`SELECT COUNT(*) as n FROM users`;
+    const sample = await db`SELECT email, name FROM users LIMIT 3`;
+
+    // Correction email si besoin
+    const fixResult = await db`UPDATE users SET email = 'payables@conteneursexperts.com' WHERE email = 'payable@conteneursexperts.com' RETURNING email`;
 
     const updated: Array<{ name: string; email: string; password: string }> = [];
+    const failed: Array<{ email: string; reason: string }> = [];
 
     for (const user of KNOWN_USERS) {
       const password = generateSafePassword();
@@ -45,25 +49,29 @@ export async function GET() {
         UPDATE users
         SET password_hash = ${hash}, must_change_password = true, updated_at = NOW()
         WHERE email = ${user.email}
-        RETURNING name
+        RETURNING name, email
       `;
 
       if (result.length > 0) {
-        updated.push({
-          name: user.name,
-          email: user.email,
-          password: password,
-        });
+        updated.push({ name: user.name, email: user.email, password });
+      } else {
+        failed.push({ email: user.email, reason: 'not found in DB' });
       }
     }
 
     await db.end();
 
     return NextResponse.json({
-      success: true,
+      diagnostic: {
+        totalUsersInDB: diag[0].n,
+        firstThree: sample,
+        christineFixResult: fixResult.length > 0 ? 'fixed' : 'nothing to fix',
+      },
+      success: updated.length > 0,
       count: updated.length,
+      failed,
       users: updated,
-      note: 'IMPORTANT: Copiez ces mots de passe MAINTENANT - ils ne seront plus affichés.',
+      note: 'IMPORTANT: Copiez ces mots de passe MAINTENANT.',
     });
   } catch (error) {
     await db.end();
