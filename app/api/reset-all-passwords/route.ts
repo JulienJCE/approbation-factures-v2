@@ -15,33 +15,31 @@ function generateSafePassword(): string {
   return `${adj}${ani}${num}`;
 }
 
-const KNOWN_USERS = [
-  { email: 'julien.j@conteneursexperts.com', name: 'Julien Jacques' },
-  { email: 'emre.k@conteneursexperts.com', name: 'Emre Keskin' },
-  { email: 'pierjean@conteneursexperts.com', name: 'Pierjean Savard' },
-  { email: 'patrick.p@conteneursexperts.com', name: 'Patrick Parent' },
-  { email: 'michel.v@conteneursexperts.com', name: 'Michel Villeneuve' },
-  { email: 'karine@conteneursexperts.com', name: 'Karine Fournelle' },
-  { email: 'franco.d@conteneursexperts.com', name: 'Franco Di Chiccio' },
-  { email: 'payables@conteneursexperts.com', name: 'Christine (Comptes payables)' },
-  { email: 'comptabilite@conteneursexperts.com', name: 'Martine (Comptabilité)' },
-];
-
 export async function GET() {
   const db = postgres(process.env.DATABASE_URL!, { max: 1, prepare: false });
 
   try {
-    // DIAGNOSTIC: voir ce que cette connexion voit
-    const diag = await db`SELECT COUNT(*) as n FROM users`;
-    const sample = await db`SELECT email, name FROM users LIMIT 3`;
+    // 1. Lire TOUS les utilisateurs de cette connexion (même vue que le UPDATE utilisera)
+    const users = await db`SELECT email, name FROM users ORDER BY role, name`;
 
-    // Correction email si besoin
-    const fixResult = await db`UPDATE users SET email = 'payables@conteneursexperts.com' WHERE email = 'payable@conteneursexperts.com' RETURNING email`;
+    if (users.length === 0) {
+      await db.end();
+      return NextResponse.json({
+        error: 'Aucun utilisateur trouvé dans la connexion. Retry.',
+        count: 0,
+      }, { status: 500 });
+    }
+
+    // 2. Corriger l'email de Christine si présent avec la mauvaise orthographe
+    await db`UPDATE users SET email = 'payables@conteneursexperts.com' WHERE email = 'payable@conteneursexperts.com'`;
+
+    // 3. Re-lire les emails (car Christine peut avoir changé)
+    const currentUsers = await db`SELECT email, name FROM users ORDER BY role, name`;
 
     const updated: Array<{ name: string; email: string; password: string }> = [];
-    const failed: Array<{ email: string; reason: string }> = [];
 
-    for (const user of KNOWN_USERS) {
+    // 4. Update chaque utilisateur par son email actuel (dans la même connexion)
+    for (const user of currentUsers) {
       const password = generateSafePassword();
       const hash = hashPassword(password);
 
@@ -49,29 +47,25 @@ export async function GET() {
         UPDATE users
         SET password_hash = ${hash}, must_change_password = true, updated_at = NOW()
         WHERE email = ${user.email}
-        RETURNING name, email
+        RETURNING name
       `;
 
       if (result.length > 0) {
-        updated.push({ name: user.name, email: user.email, password });
-      } else {
-        failed.push({ email: user.email, reason: 'not found in DB' });
+        updated.push({
+          name: user.name,
+          email: user.email,
+          password: password,
+        });
       }
     }
 
     await db.end();
 
     return NextResponse.json({
-      diagnostic: {
-        totalUsersInDB: diag[0].n,
-        firstThree: sample,
-        christineFixResult: fixResult.length > 0 ? 'fixed' : 'nothing to fix',
-      },
-      success: updated.length > 0,
+      success: true,
       count: updated.length,
-      failed,
       users: updated,
-      note: 'IMPORTANT: Copiez ces mots de passe MAINTENANT.',
+      note: 'IMPORTANT: Copiez ces mots de passe MAINTENANT - ils ne seront plus affichés.',
     });
   } catch (error) {
     await db.end();
