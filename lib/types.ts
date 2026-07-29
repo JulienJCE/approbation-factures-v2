@@ -19,6 +19,8 @@ export interface Document {
   visaCode?: string;
   pdfUrl?: string;
   pdfUrlStamped?: string;
+  submittedByName?: string;
+  submittedByEmail?: string;
   createdAt: Date;
   updatedAt: Date;
   approvedAt?: Date;

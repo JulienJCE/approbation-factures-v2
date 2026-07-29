@@ -57,11 +57,14 @@ export async function POST(
     // Envoyer le vrai email + logguer
     if (doc) {
       try {
+        // Destinataire = personne qui a soumis la facture (ou fallback si pas d'info)
+        const recipientEmail = original?.submittedByEmail || 'julien.j@conteneursexperts.com';
+
         // URL à inclure dans l'email: version tamponnée si dispo, sinon original
         const emailPdfUrl = stampedUrl || original?.pdfUrl;
 
         const emailResult = await sendApprovalEmail(
-          COMPTA_EMAIL,
+          recipientEmail,
           doc.fileName,
           status,
           approverName || 'Approbateur',
@@ -73,7 +76,7 @@ export async function POST(
 
         // Logguer aussi en DB pour la page notifications
         await logEmail({
-          to: COMPTA_EMAIL,
+          to: recipientEmail,
           subject: status === 'approved'
             ? `Facture approuvée: ${doc.fileName}`
             : `Facture rejetée: ${doc.fileName}`,

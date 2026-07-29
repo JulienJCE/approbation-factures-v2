@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
     const visaCode = formData.get('visaCode') as string;
     const approuveurId = formData.get('approuveurId') as string;
     const uploadedBy = (formData.get('uploadedBy') as string) || 'Comptabilité';
+    const uploadedByEmail = formData.get('uploadedByEmail') as string;
 
     if (!fileName || !volet) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 });
@@ -46,6 +47,8 @@ export async function POST(request: NextRequest) {
       volet: parseInt(volet) as 1 | 2,
       visaCode,
       pdfUrl,
+      submittedByName: uploadedBy,
+      submittedByEmail: uploadedByEmail || undefined,
     });
 
     // Envoyer un email à l'approbateur pour l'aviser (sauf si auto-approuvé)

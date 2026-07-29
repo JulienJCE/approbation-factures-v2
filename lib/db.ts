@@ -40,6 +40,8 @@ function rowToDocument(row: any): Document {
     visaCode: row.visa_code,
     pdfUrl: row.pdf_url,
     pdfUrlStamped: row.pdf_url_stamped,
+    submittedByName: row.submitted_by_name,
+    submittedByEmail: row.submitted_by_email,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     approvedAt: row.approved_at ? new Date(row.approved_at) : undefined,
@@ -63,7 +65,7 @@ export async function getPersonneByEmail(email: string): Promise<Personne | null
   return personnes.find(p => p.email === email) || null;
 }
 
-export async function createDocument(data: { type: 'invoice' | 'visa'; fileName: string; approuveurId: string; volet: 1 | 2; visaCode?: string; pdfUrl?: string }): Promise<Document> {
+export async function createDocument(data: { type: 'invoice' | 'visa'; fileName: string; approuveurId: string; volet: 1 | 2; visaCode?: string; pdfUrl?: string; submittedByName?: string; submittedByEmail?: string }): Promise<Document> {
   const now = new Date();
   const visaRouting = data.visaCode ? routageVisa[data.visaCode as keyof typeof routageVisa] : null;
   const stampsApplied: string[] = [];
@@ -79,7 +81,7 @@ export async function createDocument(data: { type: 'invoice' | 'visa'; fileName:
     }
   }
 
-  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${data.pdfUrl || null}, ${db.array(stampsApplied)}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
+  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, submitted_by_name, submitted_by_email, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${data.pdfUrl || null}, ${db.array(stampsApplied)}, ${data.submittedByName || null}, ${data.submittedByEmail || null}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
   return rowToDocument(result[0]);
 }
 

@@ -59,6 +59,7 @@ export default function ComptabilitePage() {
       formData.append('fileName', file.name);
       formData.append('approuveurId', approuveurId);
       formData.append('uploadedBy', currentUser?.name || 'Comptabilité');
+      formData.append('uploadedByEmail', currentUser?.email || '');
 
       const response = await fetch('/api/documents', {
         method: 'POST',
