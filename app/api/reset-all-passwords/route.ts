@@ -15,36 +15,46 @@ function generateSafePassword(): string {
   return `${adj}${ani}${num}`;
 }
 
+// Liste connue des utilisateurs — on passe pas par SELECT pour éviter le cache Neon
+const KNOWN_USERS = [
+  { email: 'julien.j@conteneursexperts.com', name: 'Julien Jacques' },
+  { email: 'emre.k@conteneursexperts.com', name: 'Emre Keskin' },
+  { email: 'pierjean@conteneursexperts.com', name: 'Pierjean Savard' },
+  { email: 'patrick.p@conteneursexperts.com', name: 'Patrick Parent' },
+  { email: 'michel.v@conteneursexperts.com', name: 'Michel Villeneuve' },
+  { email: 'karine@conteneursexperts.com', name: 'Karine Fournelle' },
+  { email: 'franco.d@conteneursexperts.com', name: 'Franco Di Chiccio' },
+  { email: 'payables@conteneursexperts.com', name: 'Christine (Comptes payables)' },
+  { email: 'comptabilite@conteneursexperts.com', name: 'Martine (Comptabilité)' },
+];
+
 export async function GET() {
   const db = postgres(process.env.DATABASE_URL!, { max: 1, prepare: false });
 
   try {
-    // Récupérer TOUS les utilisateurs
-    const users = await db`SELECT email, name FROM users ORDER BY role, name`;
-
-    // Aussi corriger l'email de Christine si besoin
+    // D'abord corriger l'email de Christine si besoin
     await db`UPDATE users SET email = 'payables@conteneursexperts.com' WHERE email = 'payable@conteneursexperts.com'`;
 
     const updated: Array<{ name: string; email: string; password: string }> = [];
 
-    for (const user of users) {
+    for (const user of KNOWN_USERS) {
       const password = generateSafePassword();
       const hash = hashPassword(password);
-      const finalEmail = user.email === 'payable@conteneursexperts.com' 
-        ? 'payables@conteneursexperts.com' 
-        : user.email;
 
-      await db`
+      const result = await db`
         UPDATE users
         SET password_hash = ${hash}, must_change_password = true, updated_at = NOW()
-        WHERE email = ${finalEmail}
+        WHERE email = ${user.email}
+        RETURNING name
       `;
 
-      updated.push({
-        name: user.name,
-        email: finalEmail,
-        password: password,
-      });
+      if (result.length > 0) {
+        updated.push({
+          name: user.name,
+          email: user.email,
+          password: password,
+        });
+      }
     }
 
     await db.end();
