@@ -19,27 +19,39 @@ export async function GET() {
   const db = postgres(process.env.DATABASE_URL!, { max: 1, prepare: false });
 
   try {
+    // Récupérer TOUS les utilisateurs
     const users = await db`SELECT email, name FROM users ORDER BY role, name`;
-    const updated = [];
+
+    // Aussi corriger l'email de Christine si besoin
+    await db`UPDATE users SET email = 'payables@conteneursexperts.com' WHERE email = 'payable@conteneursexperts.com'`;
+
+    const updated: Array<{ name: string; email: string; password: string }> = [];
 
     for (const user of users) {
       const password = generateSafePassword();
       const hash = hashPassword(password);
+      const finalEmail = user.email === 'payable@conteneursexperts.com' 
+        ? 'payables@conteneursexperts.com' 
+        : user.email;
 
       await db`
         UPDATE users
         SET password_hash = ${hash}, must_change_password = true, updated_at = NOW()
-        WHERE email = ${user.email}
+        WHERE email = ${finalEmail}
       `;
 
-      updated.push({ name: user.name, email: user.email, password });
+      updated.push({
+        name: user.name,
+        email: finalEmail,
+        password: password,
+      });
     }
 
     await db.end();
 
     return NextResponse.json({
       success: true,
-      message: 'Tous les mots de passe ont été réinitialisés (sans caractères spéciaux)',
+      count: updated.length,
       users: updated,
       note: 'IMPORTANT: Copiez ces mots de passe MAINTENANT - ils ne seront plus affichés.',
     });
