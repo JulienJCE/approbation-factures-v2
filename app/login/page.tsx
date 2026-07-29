@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Suspense } from 'react';
 
 function LoginContent() {
@@ -141,6 +142,12 @@ function LoginContent() {
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
+
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <Link href="/forgot-password" style={{ color: '#007bff', fontSize: '0.9rem' }}>
+            🔑 Mot de passe oublié?
+          </Link>
+        </div>
       </div>
     </div>
   );
