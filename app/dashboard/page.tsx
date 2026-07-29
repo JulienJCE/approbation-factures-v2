@@ -41,10 +41,17 @@ export default function Dashboard() {
   return (
     <div style={{ padding: '2rem' }}>
       <div style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1>Dashboard</h1>
-          <p>Bienvenue, {user.name}</p>
-          <p style={{ fontSize: '0.9rem', color: '#666' }}>{user.email}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <img
+            src="/logo-conteneurs-experts.png"
+            alt="Conteneurs Experts"
+            style={{ height: '80px', width: 'auto' }}
+          />
+          <div>
+            <h1 style={{ margin: 0 }}>Dashboard</h1>
+            <p style={{ margin: '0.25rem 0 0 0' }}>Bienvenue, {user.name}</p>
+            <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>{user.email}</p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Link
