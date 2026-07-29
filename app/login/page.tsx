@@ -66,7 +66,14 @@ function LoginContent() {
         width: '100%',
         maxWidth: '400px'
       }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '2rem', lineHeight: '1.3' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <img
+            src="/logo-conteneurs-experts.png"
+            alt="Conteneurs Experts"
+            style={{ height: '100px', width: 'auto' }}
+          />
+        </div>
+        <h1 style={{ textAlign: 'center', marginBottom: '2rem', lineHeight: '1.3', fontSize: '1.4rem' }}>
           Approbation de Factures
           <br />
           Conteneurs Experts

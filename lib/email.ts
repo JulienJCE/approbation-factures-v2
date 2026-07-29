@@ -10,6 +10,9 @@ export async function sendResetEmail(
   try {
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="https://approbation-factures-v2.vercel.app/logo-conteneurs-experts.png" alt="Conteneurs Experts" style="height: 80px;">
+        </div>
         <h2 style="color: #007bff;">🔑 Réinitialisation de mot de passe</h2>
         <p>Bonjour ${userName},</p>
         <p>Votre mot de passe temporaire pour l'application Approbation de Factures Conteneurs Experts a été réinitialisé.</p>
@@ -59,6 +62,9 @@ export async function sendApprovalEmail(
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="https://approbation-factures-v2.vercel.app/logo-conteneurs-experts.png" alt="Conteneurs Experts" style="height: 80px;">
+        </div>
         <h2 style="color: ${statusColor};">Facture ${statusText}</h2>
         <p>Bonjour,</p>
         <p>La facture <strong>${documentName}</strong> a été <strong style="color: ${statusColor};">${statusText.toLowerCase()}</strong> par ${approverName}.</p>
@@ -118,6 +124,9 @@ export async function sendApprovalRequestEmail(
   try {
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="https://approbation-factures-v2.vercel.app/logo-conteneurs-experts.png" alt="Conteneurs Experts" style="height: 80px;">
+        </div>
         <h2 style="color: #6f42c1;">📋 Nouvelle facture à approuver</h2>
         <p>Bonjour ${approverName},</p>
         <p>Une nouvelle facture a été soumise pour votre approbation par <strong>${uploadedBy}</strong>.</p>
