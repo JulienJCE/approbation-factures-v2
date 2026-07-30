@@ -1,6 +1,6 @@
 # PROJET : APPROBATION DE FACTURES & COMPTES DE DÉPENSES — DOCUMENTATION TECHNIQUE COMPLÈTE
 
-> Document de référence exhaustif destiné à permettre à une instance d'IA (ou un développeur) de reprendre le projet à 100% sans contexte préalable. Source de vérité : le code du repo GitHub `JulienJCE/approbation-factures-v2` (lu directement, pas de mémoire). Dernière mise à jour : 2026-07-29.
+> Document de référence exhaustif destiné à permettre à une instance d'IA (ou un développeur) de reprendre le projet à 100% sans contexte préalable. Source de vérité : le code du repo GitHub `JulienJCE/approbation-factures-v2` (lu directement, pas de mémoire). Dernière mise à jour : 2026-07-30 (schéma vérifié directement sur Neon).
 
 ---
 
@@ -66,7 +66,27 @@ Idée seulement. Scaffolding présent : routage visa en mémoire, tampon 'visa',
 
 ## 4. SCHÉMA BASE DE DONNÉES (Neon PostgreSQL)
 
-### 4.1 Table `documents`
+### 4.1 Table `documents` — SCHÉMA RÉEL VÉRIFIÉ (14 colonnes, Neon `neondb`, 2026-07-30)
+Ordre exact des colonnes tel que retourné par `information_schema.columns` :
+```
+ #  | column_name        | data_type                    | max_length
+----+--------------------+------------------------------+-----------
+ 1  | id                 | uuid                         | —
+ 2  | type               | character varying            | 50
+ 3  | file_name          | character varying            | 255
+ 4  | volet              | integer                      | —
+ 5  | status             | character varying            | 50
+ 6  | approuveur_id      | character varying            | 50
+ 7  | visa_code          | character varying            | 50
+ 8  | pdf_url            | character varying            | 512
+ 9  | stamps_applied     | ARRAY (TEXT[])               | —
+ 10 | created_at         | timestamp without time zone  | —
+ 11 | updated_at         | timestamp without time zone  | —
+ 12 | approved_at        | timestamp without time zone  | —
+ 13 | submitted_by_name  | character varying            | 255
+ 14 | submitted_by_email | character varying            | 255
+```
+Équivalent DDL du schéma réel :
 ```sql
 CREATE TABLE documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -76,16 +96,20 @@ CREATE TABLE documents (
   status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
   approuveur_id VARCHAR(50) NOT NULL,        -- réfère à personnes[] en mémoire, PAS de FK
   visa_code VARCHAR(50),
-  pdf_url VARCHAR(1024),                       -- écrasé par version tamponnée après approbation
-  pdf_url_stamped VARCHAR(1024),              -- présent dans migrate-v2 mais code écrase pdf_url à la place
-  stamps_applied TEXT[],
-  submitted_by_name VARCHAR(255),            -- ajouté tardivement (migrate-v3 / migrate-submitted-by)
-  submitted_by_email VARCHAR(255),           -- idem
+  pdf_url VARCHAR(512),                       -- écrasé par version tamponnée après approbation
+  stamps_applied TEXT[],                      -- type ARRAY (pas JSONB)
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  approved_at TIMESTAMP
+  approved_at TIMESTAMP,
+  submitted_by_name VARCHAR(255),            -- ajouté 2026-07-30 via ALTER direct dans Neon (voir §12)
+  submitted_by_email VARCHAR(255)            -- idem
 );
 ```
+**FAITS IMPORTANTS SUR CE SCHÉMA RÉEL :**
+- `pdf_url` est en réalité VARCHAR(**512**), pas 1024. La colonne `pdf_url_stamped` (présente dans le code de migrate-v2) N'EXISTE PAS dans la base réelle — le code utilise `saveStampedPdfUrl()` qui écrase `pdf_url`. L'original n'est donc plus accessible après tamponnage.
+- `stamps_applied` est de type **ARRAY (TEXT[])**, confirmé — pas JSONB.
+- `submitted_by_name` et `submitted_by_email` ont été ajoutées le **2026-07-30 par ALTER direct dans la console Neon** (les endpoints de migration `/api/migrate-v3` et `/api/migrate-submitted-by` n'avaient PAS effectivement modifié cette base — voir §12 et §13).
+
 **NOTE CRITIQUE** : `approuveur_id` n'a PAS de contrainte FK. Les personnes (approbateurs) sont codées en dur dans `lib/db.ts` (tableau `personnes`), pas stockées en DB. Seule la table `users` (auth) est en DB.
 
 ### 4.2 Table `users` (authentification)
@@ -128,7 +152,7 @@ Ces deux listes ne sont PAS synchronisées automatiquement. Les IDs de `personne
 
 | Variable | Usage | Où utilisée |
 |---|---|---|
-| `DATABASE_URL` | Connexion Neon PostgreSQL | lib/db.ts, lib/auth.ts, tous les /api/migrate* |
+| `DATABASE_URL` | Connexion Neon PostgreSQL (base `neondb`, branche Primary) | lib/db.ts, lib/auth.ts, tous les /api/migrate* |
 | `RESEND_API_KEY` | Clé API Resend | lib/email.ts |
 | `COMPTA_EMAIL` | Email compta (fallback destinataire) | app/api/documents/[id]/approve/route.ts (défaut: julien.j@conteneursexperts.com) |
 | `BLOB_READ_WRITE_TOKEN` | Auto-injecté par Vercel Blob | @vercel/blob put() |
@@ -235,10 +259,10 @@ patrick.p@conteneursexperts.com       Patrick Parent                approbateur 
 michel.v@conteneursexperts.com        Michel Villeneuve             approbateur  can_approve=true
 karine@conteneursexperts.com          Karine Fournelle              approbateur  can_approve=true
 franco.d@conteneursexperts.com        Franco Di Chiccio             approbateur  can_approve=true
-payable@conteneursexperts.com         Christine (Comptes payables)  comptabilite can_approve=false
+payables@conteneursexperts.com        Christine (Comptes payables)  comptabilite can_approve=false
 comptabilite@conteneursexperts.com    Martine (Comptabilité)        comptabilite can_approve=false
 ```
-⚠️ INCOHÉRENCE : le guide de formation liste `payables@` (avec s) mais seed-users crée `payable@` (sans s). À vérifier/corriger.
+✅ RÉGLÉ (2026-07-30) : email de Christine unifié sur `payables@` (avec s) — corrigé en base Neon (UPDATE direct) ET dans le code source (seed-users). Vérifié : 9 users présents, aucun `payable@` résiduel.
 
 ### 7.4 Configuration des tampons PDF (lib/pdf-stamp.ts)
 ```
@@ -320,6 +344,23 @@ Utiliser cette méthode pour les opérations ponctuelles ou destructives contrô
 
 **DIAGNOSTIC DU SCHÉMA** : toujours appeler `/api/check-schema` pour voir l'état réel des colonnes de `documents` avant/après une migration.
 
+**⚠️ LEÇON CRITIQUE (2026-07-30)** : un endpoint de migration peut retourner "success" SANS avoir modifié la vraie base. Observé : `/api/migrate-v3` et `/api/migrate-submitted-by` rapportaient un succès, mais `submitted_by_name`/`submitted_by_email` étaient ABSENTES de `neondb` (probablement exécutés sur une autre branche Neon, ou la connexion pointait ailleurs). NE JAMAIS se fier au message de succès d'un endpoint. TOUJOURS vérifier via `information_schema.columns` directement dans la console Neon. La correction fiable a été faite par ALTER direct dans le SQL Editor Neon.
+
+**ACCÈS NEON DIRECT (méthode de référence pour vérifier/modifier le schéma)** :
+1. https://console.neon.tech → projet `production` → base `neondb` → branche `Primary` → SQL Editor.
+2. Vérifier le schéma réel d'une table :
+```sql
+SELECT column_name, data_type, character_maximum_length
+FROM information_schema.columns
+WHERE table_name = 'documents'
+ORDER BY ordinal_position;
+```
+3. Ajouter une colonne (idempotent, non destructif) :
+```sql
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS ma_colonne VARCHAR(255);
+```
+4. Attention : le SQL Editor exécute TOUT le contenu de l'onglet (toutes les requêtes présentes), pas seulement la ligne courante. Vider l'onglet ou isoler la requête pour éviter de rejouer d'anciens scripts (ex. un ancien `INSERT` de données de test).
+
 ### 8.5 MODIFIER LES VARIABLES D'ENVIRONNEMENT (Vercel)
 1. https://vercel.com → projet approbation-factures-v2 → Settings → Environment Variables.
 2. Ajouter/modifier → sélectionner les environnements (Production/Preview/Development).
@@ -376,7 +417,7 @@ Chaîne d'approbation distincte pour les dépenses par carte Visa corporative. U
 ## 11. BACKLOG GLOBAL & PROCHAINES ÉTAPES (priorisé)
 
 ### PRIORITÉ 1 — Stabilisation Phase 1 (Volet 1)
-- [ ] Corriger l'incohérence email `payable@` vs `payables@` (seed-users vs guide formation).
+- [x] ~~Corriger l'incohérence email `payable@` vs `payables@`~~ FAIT 2026-07-30 (base + code alignés sur `payables@`).
 - [ ] Synchroniser ou unifier les deux modèles de personnes (`users` DB ↔ `personnes` mémoire). Risque de bugs de routage.
 - [ ] Sécuriser les endpoints /api/migrate*, /api/seed-users, /api/reset-all-passwords (actuellement PUBLICS — n'importe qui avec l'URL peut détruire la DB). Ajouter un secret/header d'auth ou les supprimer après usage.
 - [ ] Nettoyer les doublons de migration (migrate-v3 == migrate-submitted-by).
@@ -416,6 +457,12 @@ Chaîne d'approbation distincte pour les dépenses par carte Visa corporative. U
   - Création endpoint /api/migrate-submitted-by (doublon fonctionnel de v3, + index + UPDATE 'Unknown').
   - Erreur 404 (fichier .ts hors dossier route.ts) → corrigé.
   - Push GitHub via PAT réussi (commits 0e11637, fe070db).
+- **2026-07-30** :
+  - Document de référence technique (PROJET_DOCUMENTATION.md) ajouté au repo (commit f0f19d7).
+  - Correction email Christine : `payable@` → `payables@` (UPDATE direct Neon + fix seed-users, commit 55336cd).
+  - Vérification état base : table `users` = 9 personnes correctes ; table `documents` = 0 ligne (vide, saine).
+  - DÉCOUVERTE : les colonnes `submitted_by_name`/`submitted_by_email` étaient ABSENTES de `neondb` malgré les migrations "réussies". Ajoutées par ALTER direct dans Neon. Table `documents` passe à 14 colonnes.
+  - Schéma réel de `documents` vérifié via information_schema et documenté (§4.1).
 
 ---
 
@@ -429,6 +476,9 @@ Chaîne d'approbation distincte pour les dépenses par carte Visa corporative. U
 6. **Deux modèles de personnes désynchronisés** (users DB vs personnes mémoire) → source potentielle de bugs de routage.
 7. **pdf_url est écrasé** par la version tamponnée après approbation → l'original n'est plus accessible ensuite (la colonne pdf_url_stamped existe mais n'est pas utilisée). À revoir si on veut conserver l'original.
 8. **Resend from = onboarding@resend.dev** → les courriels partent d'un domaine test, pas pro.
+9. **Un endpoint de migration peut mentir** → "success" retourné sans modification réelle de la base (branche Neon différente ou connexion ailleurs). Vérifier TOUJOURS avec information_schema dans la console Neon, jamais se fier au JSON de l'endpoint.
+10. **pdf_url_stamped n'existe pas en base** → le code de migrate-v2 la crée sur le papier, mais la vraie table ne l'a pas. Le tamponnage écrase `pdf_url` (VARCHAR 512). L'original est perdu après approbation.
+11. **Le SQL Editor Neon exécute tout l'onglet** → attention à ne pas rejouer d'anciens INSERT/DROP présents plus haut dans l'éditeur.
 
 ---
 
