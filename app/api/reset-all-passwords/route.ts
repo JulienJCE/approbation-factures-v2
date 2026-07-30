@@ -30,7 +30,8 @@ export async function GET() {
       }, { status: 500 });
     }
 
-    // 2. Corriger l'email de Christine si présent avec la mauvaise orthographe
+    // 2. Filet de sécurité : migrer un ancien compte 'payable@' (sans s) vers 'payables@' (avec s).
+    //    La source (seed-users) crée maintenant directement 'payables@' — ceci ne corrige que les données historiques.
     await db`UPDATE users SET email = 'payables@conteneursexperts.com' WHERE email = 'payable@conteneursexperts.com'`;
 
     // 3. Re-lire les emails (car Christine peut avoir changé)

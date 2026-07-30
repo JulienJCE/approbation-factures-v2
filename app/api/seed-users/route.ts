@@ -24,7 +24,7 @@ const USERS = [
   { email: 'michel.v@conteneursexperts.com', name: 'Michel Villeneuve', role: 'approbateur', canApprove: true },
   { email: 'karine@conteneursexperts.com', name: 'Karine Fournelle', role: 'approbateur', canApprove: true },
   { email: 'franco.d@conteneursexperts.com', name: 'Franco Di Chiccio', role: 'approbateur', canApprove: true },
-  { email: 'payable@conteneursexperts.com', name: 'Christine (Comptes payables)', role: 'comptabilite', canApprove: false },
+  { email: 'payables@conteneursexperts.com', name: 'Christine (Comptes payables)', role: 'comptabilite', canApprove: false },
   { email: 'comptabilite@conteneursexperts.com', name: 'Martine (Comptabilité)', role: 'comptabilite', canApprove: false },
 ];
 
