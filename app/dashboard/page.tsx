@@ -43,7 +43,7 @@ export default function Dashboard() {
       <img
         src="/appro-logo.svg"
         alt="APPRO — Approbation des factures et dépenses"
-        style={{ height: '64px', width: 'auto', marginBottom: '1.25rem' }}
+        style={{ height: '80px', width: 'auto', marginBottom: '1.25rem' }}
       />
       <div style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
