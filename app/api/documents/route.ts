@@ -15,8 +15,39 @@ export async function POST(request: NextRequest) {
     const uploadedBy = (formData.get('uploadedBy') as string) || 'Comptabilité';
     const uploadedByEmail = formData.get('uploadedByEmail') as string;
 
+    // Champs spécifiques aux dépenses Visa (Volet 2)
+    const amountRaw = formData.get('amount') as string;
+    const amountTpsRaw = formData.get('amountTps') as string;
+    const amountTvqRaw = formData.get('amountTvq') as string;
+    const category = (formData.get('category') as string) || undefined;
+    const categoryOtherDescription = (formData.get('categoryOtherDescription') as string) || undefined;
+    const expenseExplanation = (formData.get('expenseExplanation') as string) || undefined;
+
     if (!fileName || !volet) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 });
+    }
+
+    // Validation des champs Volet 2
+    let amount: number | undefined;
+    let amountTps: number | undefined;
+    let amountTvq: number | undefined;
+    if (type === 'visa') {
+      amount = amountRaw ? parseFloat(amountRaw) : undefined;
+      amountTps = amountTpsRaw ? parseFloat(amountTpsRaw) : undefined;
+      amountTvq = amountTvqRaw ? parseFloat(amountTvqRaw) : undefined;
+
+      if (amount === undefined || isNaN(amount) || amount <= 0) {
+        return NextResponse.json({ error: 'Montant invalide' }, { status: 400 });
+      }
+      if ((amountTps !== undefined && isNaN(amountTps)) || (amountTvq !== undefined && isNaN(amountTvq))) {
+        return NextResponse.json({ error: 'Montant de taxe invalide' }, { status: 400 });
+      }
+      if (!category) {
+        return NextResponse.json({ error: 'Catégorie requise' }, { status: 400 });
+      }
+      if (category === 'Autre' && !categoryOtherDescription?.trim()) {
+        return NextResponse.json({ error: 'Description requise pour la catégorie Autre' }, { status: 400 });
+      }
     }
 
     // Uploader le PDF vers Vercel Blob
@@ -49,6 +80,12 @@ export async function POST(request: NextRequest) {
       pdfUrl,
       submittedByName: uploadedBy,
       submittedByEmail: uploadedByEmail || undefined,
+      amount,
+      amountTps,
+      amountTvq,
+      category,
+      categoryOtherDescription,
+      expenseExplanation,
     });
 
     // Envoyer un email à l'approbateur pour l'aviser (sauf si auto-approuvé)

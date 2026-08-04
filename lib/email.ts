@@ -157,3 +157,108 @@ export async function sendApprovalRequestEmail(
     return { ok: false, error: String(error) };
   }
 }
+
+export interface ExpenseBatchRow {
+  employeName: string;
+  date: string;
+  fileName: string;
+  amount: number;
+  amountTps?: number;
+  amountTvq?: number;
+  category: string;
+  categoryOtherDescription?: string;
+  expenseExplanation?: string;
+  status: string;
+  pdfUrl?: string;
+}
+
+/**
+ * Envoie le récapitulatif mensuel des dépenses Visa à la comptabilité
+ * (Christine, payables@). Un seul courriel regroupant toutes les dépenses
+ * du mois précédent, tous statuts confondus.
+ */
+export async function sendMonthlyExpenseBatch(
+  toEmail: string,
+  periodLabel: string,
+  rows: ExpenseBatchRow[]
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const fmt = (n?: number) =>
+      n != null ? n.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' }) : '—';
+
+    const statusLabel = (s: string) =>
+      s === 'approved' ? '✅ Approuvée' : s === 'rejected' ? '❌ Rejetée' : '⏳ En attente';
+
+    const totalAmount = rows.reduce((sum, r) => sum + (r.amount || 0), 0);
+    const totalTps = rows.reduce((sum, r) => sum + (r.amountTps || 0), 0);
+    const totalTvq = rows.reduce((sum, r) => sum + (r.amountTvq || 0), 0);
+
+    const tableRows = rows
+      .map(
+        (r) => `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;">${r.employeName}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">${r.date}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(r.amount)}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(r.amountTps)}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(r.amountTvq)}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${r.category}${r.category === 'Autre' && r.categoryOtherDescription ? ` (${r.categoryOtherDescription})` : ''}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${r.expenseExplanation || '—'}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">${statusLabel(r.status)}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${r.pdfUrl ? `<a href="${r.pdfUrl}">📄 Reçu</a>` : '—'}</td>
+        </tr>`
+      )
+      .join('');
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto;">
+        <h2 style="color: #1e90ff;">💳 Dépenses Visa — ${periodLabel}</h2>
+        <p>Bonjour Christine,</p>
+        <p>Voici le récapitulatif mensuel des dépenses Visa soumises durant la période <strong>${periodLabel}</strong> (${rows.length} dépense${rows.length > 1 ? 's' : ''}).</p>
+        <table style="border-collapse: collapse; width: 100%; font-size: 13px;">
+          <thead>
+            <tr style="background: #f0f4f8;">
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Employé</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Date</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Montant</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">TPS</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">TVQ</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Catégorie</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Explication</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Statut</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Reçu</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+          <tfoot>
+            <tr style="background: #f0f4f8; font-weight: bold;">
+              <td style="padding: 8px; border: 1px solid #ddd;" colspan="2">TOTAL</td>
+              <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(totalAmount)}</td>
+              <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(totalTps)}</td>
+              <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(totalTvq)}</td>
+              <td style="padding: 8px; border: 1px solid #ddd;" colspan="4"></td>
+            </tr>
+          </tfoot>
+        </table>
+        <p style="margin-top: 20px; font-size: 13px; color: #444;">Les dépenses en attente ou rejetées sont incluses à titre informatif — à traiter selon votre jugement.</p>
+        <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;">
+        <p style="font-size: 12px; color: #666;">Ce courriel a été envoyé automatiquement par le système d'approbation Conteneurs Experts le 1er du mois.</p>
+      </div>
+    `;
+
+    const result = await resend.emails.send({
+      from: 'Approbation Factures <onboarding@resend.dev>',
+      to: toEmail,
+      subject: `💳 Dépenses Visa — ${periodLabel} (${rows.length} dépense${rows.length > 1 ? 's' : ''})`,
+      html,
+    });
+
+    if (result.error) {
+      return { ok: false, error: JSON.stringify(result.error) };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error('Monthly expense batch email error:', error);
+    return { ok: false, error: String(error) };
+  }
+}

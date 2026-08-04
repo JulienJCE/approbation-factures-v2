@@ -42,6 +42,13 @@ function rowToDocument(row: any): Document {
     pdfUrlStamped: row.pdf_url_stamped,
     submittedByName: row.submitted_by_name,
     submittedByEmail: row.submitted_by_email,
+    amount: row.amount != null ? Number(row.amount) : undefined,
+    amountTps: row.amount_tps != null ? Number(row.amount_tps) : undefined,
+    amountTvq: row.amount_tvq != null ? Number(row.amount_tvq) : undefined,
+    category: row.category || undefined,
+    categoryOtherDescription: row.category_other_description || undefined,
+    expenseExplanation: row.expense_explanation || undefined,
+    batchSentAt: row.batch_sent_at ? new Date(row.batch_sent_at) : undefined,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     approvedAt: row.approved_at ? new Date(row.approved_at) : undefined,
@@ -65,7 +72,7 @@ export async function getPersonneByEmail(email: string): Promise<Personne | null
   return personnes.find(p => p.email === email) || null;
 }
 
-export async function createDocument(data: { type: 'invoice' | 'visa'; fileName: string; approuveurId: string; volet: 1 | 2; visaCode?: string; pdfUrl?: string; submittedByName?: string; submittedByEmail?: string }): Promise<Document> {
+export async function createDocument(data: { type: 'invoice' | 'visa'; fileName: string; approuveurId: string; volet: 1 | 2; visaCode?: string; pdfUrl?: string; submittedByName?: string; submittedByEmail?: string; amount?: number; amountTps?: number; amountTvq?: number; category?: string; categoryOtherDescription?: string; expenseExplanation?: string }): Promise<Document> {
   const now = new Date();
   const visaRouting = data.visaCode ? routageVisa[data.visaCode as keyof typeof routageVisa] : null;
   const stampsApplied: string[] = [];
@@ -81,7 +88,7 @@ export async function createDocument(data: { type: 'invoice' | 'visa'; fileName:
     }
   }
 
-  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, submitted_by_name, submitted_by_email, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${data.pdfUrl || null}, ${db.array(stampsApplied)}, ${data.submittedByName || null}, ${data.submittedByEmail || null}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
+  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, submitted_by_name, submitted_by_email, amount, amount_tps, amount_tvq, category, category_other_description, expense_explanation, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${data.pdfUrl || null}, ${db.array(stampsApplied)}, ${data.submittedByName || null}, ${data.submittedByEmail || null}, ${data.amount ?? null}, ${data.amountTps ?? null}, ${data.amountTvq ?? null}, ${data.category || null}, ${data.categoryOtherDescription || null}, ${data.expenseExplanation || null}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
   return rowToDocument(result[0]);
 }
 
@@ -139,6 +146,28 @@ export async function logEmail(data: { to: string; subject: string; approuveurId
 export async function getEmailsForDocument(documentId: string): Promise<JournalCourriel[]> {
   const result = await db`SELECT * FROM journal_courriels WHERE document_id = ${documentId}`;
   return result.map((row: any) => ({ id: row.id, to: row.to_email, subject: row.subject, approuveurId: row.approuveur_id, documentId: row.document_id, status: row.status, sentAt: new Date(row.sent_at) }));
+}
+
+/**
+ * Récupère les dépenses Visa (volet 2) d'une période donnée qui n'ont pas
+ * encore été incluses dans un envoi batch à la comptabilité.
+ * Inclut TOUS les statuts (approved, pending, rejected) — Christine gère
+ * elle-même les exceptions.
+ */
+export async function getExpensesForMonthlyBatch(periodStart: Date, periodEnd: Date): Promise<Document[]> {
+  const result = await db`SELECT * FROM documents WHERE volet = 2 AND type = 'visa' AND batch_sent_at IS NULL AND created_at >= ${periodStart} AND created_at < ${periodEnd} ORDER BY created_at ASC`;
+  return result.map(rowToDocument);
+}
+
+/**
+ * Marque une liste de dépenses comme incluses dans le batch mensuel
+ * (évite les doublons lors des envois suivants).
+ */
+export async function markExpensesBatchSent(ids: string[]): Promise<number> {
+  if (!ids.length) return 0;
+  const now = new Date();
+  const result = await db`UPDATE documents SET batch_sent_at = ${now}, updated_at = ${now} WHERE id IN ${db(ids)} RETURNING id`;
+  return result.length;
 }
 
 export function getVisaRouting(code: string) {

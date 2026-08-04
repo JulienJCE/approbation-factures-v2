@@ -9,6 +9,16 @@ export type DocumentStatus = 'pending' | 'approved' | 'rejected';
 export type DocumentType = 'invoice' | 'visa';
 export type Volet = 1 | 2;
 
+export type ExpenseCategory =
+  | 'Restaurant'
+  | 'Repas'
+  | 'Déplacements'
+  | 'Hébergement'
+  | 'Matériel'
+  | 'Fourniture'
+  | 'Informatique'
+  | 'Autre';
+
 export interface Document {
   id: string;
   type: DocumentType;
@@ -21,6 +31,13 @@ export interface Document {
   pdfUrlStamped?: string;
   submittedByName?: string;
   submittedByEmail?: string;
+  amount?: number;
+  amountTps?: number;
+  amountTvq?: number;
+  category?: ExpenseCategory;
+  categoryOtherDescription?: string;
+  expenseExplanation?: string;
+  batchSentAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   approvedAt?: Date;

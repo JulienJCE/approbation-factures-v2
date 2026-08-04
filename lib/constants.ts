@@ -20,6 +20,17 @@ export const ROLES = {
   COMPTABLE: 'comptable',
 } as const;
 
+export const EXPENSE_CATEGORIES = [
+  'Restaurant',
+  'Repas',
+  'Déplacements',
+  'Hébergement',
+  'Matériel',
+  'Fourniture',
+  'Informatique',
+  'Autre',
+] as const;
+
 export const STAMP_COLORS = {
   VISA: { r: 30, g: 144, b: 255 },
   APPROVED: { r: 197, g: 80, b: 79 },
