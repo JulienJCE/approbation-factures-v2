@@ -15,18 +15,31 @@ const personnes: Personne[] = [
   { id: '4', nom: 'Patrick Parent', email: 'patrick.p@conteneursexperts.com', role: 'approuveur' },
   { id: '5', nom: 'Michel Villeneuve', email: 'michel.v@conteneursexperts.com', role: 'approuveur' },
   { id: '6', nom: 'Karine Fournelle', email: 'karine@conteneursexperts.com', role: 'approuveur' },
-  { id: '7', nom: 'Franco Di Chiccio', email: 'franco.d@conteneursexperts.com', role: 'approuveur' },
+  { id: '7', nom: 'Franco De Ciccio', email: 'franco.d@conteneursexperts.com', role: 'approuveur' },
   { id: '8', nom: 'Yanick Tremblay', email: 'yanick.t@conteneursexperts.com', role: 'employe_visa' },
-  { id: '9', nom: 'Marco Chappadeau', email: 'marco.c@conteneursexperts.com', role: 'employe_visa' },
+  { id: '9', nom: 'Marco Chapadeau', email: 'marco.c@conteneursexperts.com', role: 'employe_visa' },
   { id: '10', nom: 'Eric Cloutier', email: 'eric.c@conteneursexperts.com', role: 'employe_visa' },
+  { id: '11', nom: 'Alain Charbonneau', email: 'alain.c@conteneursexperts.com', role: 'employe_visa' },
+  { id: '12', nom: 'Stéphane Laprise', email: 'stephane.l@conteneursexperts.com', role: 'employe_visa' },
 ];
 
+// Codes d'accès Visa : employé → approbateur.
+// autoApprove = true réservé aux autorités ultimes (propriétaire, DG).
+// Note : certains approbateurs (Julien, Karine, Franco) sont aussi
+// détenteurs d'une carte Visa — ils ont donc leur propre code employé.
 const routageVisa = {
-  'PS-2026': { employeId: '3', approuveurId: '3', autoApprove: true },
-  'EK-2026': { employeId: '2', approuveurId: '2', autoApprove: true },
-  'YT-2026': { employeId: '8', approuveurId: '7', autoApprove: false },
-  'MC-2026': { employeId: '9', approuveurId: '5', autoApprove: false },
-  'EC-2026': { employeId: '10', approuveurId: '4', autoApprove: false },
+  // Auto-approuvés (aucun supérieur hiérarchique)
+  'PS-2026': { employeId: '3', approuveurId: '3', autoApprove: true },   // Pierjean Savard (propriétaire)
+  'EK-2026': { employeId: '2', approuveurId: '2', autoApprove: true },   // Emre Keskin (directeur général)
+  // Approbation requise
+  'JJ-2026': { employeId: '1', approuveurId: '2', autoApprove: false },  // Julien Jacques → Emre Keskin
+  'KF-2026': { employeId: '6', approuveurId: '2', autoApprove: false },  // Karine Fournelle → Emre Keskin
+  'FD-2026': { employeId: '7', approuveurId: '2', autoApprove: false },  // Franco De Ciccio → Emre Keskin
+  'SL-2026': { employeId: '12', approuveurId: '2', autoApprove: false }, // Stéphane Laprise → Emre Keskin
+  'YT-2026': { employeId: '8', approuveurId: '7', autoApprove: false },  // Yanick Tremblay → Franco De Ciccio
+  'AC-2026': { employeId: '11', approuveurId: '7', autoApprove: false }, // Alain Charbonneau → Franco De Ciccio
+  'MC-2026': { employeId: '9', approuveurId: '5', autoApprove: false },  // Marco Chapadeau → Michel Villeneuve
+  'EC-2026': { employeId: '10', approuveurId: '4', autoApprove: false }, // Eric Cloutier → Patrick Parent
 };
 
 function rowToDocument(row: any): Document {
