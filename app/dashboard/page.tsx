@@ -40,18 +40,11 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-        <img
-          src="/appro-logo.svg"
-          alt="APPRO — Approbation des factures et dépenses"
-          style={{ height: '80px', width: 'auto' }}
-        />
-        <img
-          src="/logo-conteneurs-experts.png"
-          alt="Conteneurs Experts"
-          style={{ height: '62px', width: 'auto' }}
-        />
-      </div>
+      <img
+        src="/appro-logo.svg"
+        alt="APPRO — Approbation des factures et dépenses"
+        style={{ height: '80px', width: 'auto', marginBottom: '1.25rem' }}
+      />
       <div style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <div>
@@ -59,6 +52,11 @@ export default function Dashboard() {
             <p style={{ margin: '0.25rem 0 0 0' }}>Bienvenue, {user.name}</p>
             <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>{user.email}</p>
           </div>
+          <img
+            src="/logo-conteneurs-experts.png"
+            alt="Conteneurs Experts"
+            style={{ height: '72px', width: 'auto' }}
+          />
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Link
