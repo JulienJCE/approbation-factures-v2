@@ -68,15 +68,20 @@ function LoginContent() {
       }}>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <img
-            src="/logo-conteneurs-experts.png"
-            alt="Conteneurs Experts"
-            style={{ height: '100px', width: 'auto' }}
+            src="/appro-badge.svg"
+            alt="APPRO"
+            style={{ width: '230px', maxWidth: '100%', height: 'auto' }}
           />
         </div>
-        <h1 style={{ textAlign: 'center', marginBottom: '2rem', lineHeight: '1.3', fontSize: '1.4rem' }}>
-          Approbation de Factures
-          <br />
-          Conteneurs Experts
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <img
+            src="/logo-conteneurs-experts.png"
+            alt="Conteneurs Experts"
+            style={{ height: '70px', width: 'auto' }}
+          />
+        </div>
+        <h1 style={{ textAlign: 'center', marginBottom: '2rem', lineHeight: '1.3', fontSize: '1.05rem', fontWeight: 500, color: '#5B6570' }}>
+          Approbation des factures et dépenses
         </h1>
         
         <form onSubmit={handleLogin}>

@@ -40,6 +40,11 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: '2rem' }}>
+      <img
+        src="/appro-logo.svg"
+        alt="APPRO — Approbation des factures et dépenses"
+        style={{ height: '64px', width: 'auto', marginBottom: '1.25rem' }}
+      />
       <div style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <img
@@ -101,7 +106,7 @@ export default function Dashboard() {
               borderRadius: '4px'
             }}
           >
-            📤 Upload Factures (Volet 1)
+            📤 Upload Factures (Payables)
           </Link>
           <Link 
             href="/volet2/employe"
@@ -113,7 +118,7 @@ export default function Dashboard() {
               borderRadius: '4px'
             }}
           >
-            📝 Visa Dépenses (Volet 2)
+            📝 Visa Dépenses
           </Link>
           <Link 
             href="/approbateur"

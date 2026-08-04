@@ -1,7 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Approbation de Factures Conteneurs Experts',
+  title: 'APPRO — Conteneurs Experts',
+  description: 'Approbation des factures et des dépenses Visa',
 };
 
 export default function RootLayout({
