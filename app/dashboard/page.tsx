@@ -89,11 +89,6 @@ export default function Dashboard() {
       </div>
 
       <div style={{ marginBottom: '2rem' }}>
-        <h2>Statistiques</h2>
-        <p>Documents totaux: {documents.length}</p>
-      </div>
-
-      <div style={{ marginBottom: '2rem' }}>
         <h2>Actions</h2>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <Link 
@@ -157,6 +152,11 @@ export default function Dashboard() {
             🔔 Mes notifications
           </Link>
         </div>
+      </div>
+
+      <div style={{ marginBottom: '2rem' }}>
+        <h2>Statistiques</h2>
+        <p>Documents totaux: {documents.length}</p>
       </div>
 
       <div>
