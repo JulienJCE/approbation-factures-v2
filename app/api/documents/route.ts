@@ -63,12 +63,22 @@ export async function POST(request: NextRequest) {
 
     // Traitement du routage visa
     let finalApprouveurId = approuveurId;
+    let finalUploadedBy = uploadedBy;
+    let finalUploadedByEmail = uploadedByEmail || undefined;
     if (type === 'visa') {
       if (!visaCode || !isValidVisaCode(visaCode)) {
         return NextResponse.json({ error: 'Code Visa invalide' }, { status: 400 });
       }
       const routing = getVisaRouting(visaCode);
-      if (routing) finalApprouveurId = routing.approuveurId;
+      if (routing) {
+        finalApprouveurId = routing.approuveurId;
+        // Identité de l'employé déduite du code Visa (pour le batch mensuel)
+        const employe = await getPersonneById(routing.employeId);
+        if (employe) {
+          finalUploadedBy = employe.nom;
+          finalUploadedByEmail = employe.email;
+        }
+      }
     }
 
     const doc = await createDocument({
@@ -78,8 +88,8 @@ export async function POST(request: NextRequest) {
       volet: parseInt(volet) as 1 | 2,
       visaCode,
       pdfUrl,
-      submittedByName: uploadedBy,
-      submittedByEmail: uploadedByEmail || undefined,
+      submittedByName: finalUploadedBy,
+      submittedByEmail: finalUploadedByEmail,
       amount,
       amountTps,
       amountTvq,
