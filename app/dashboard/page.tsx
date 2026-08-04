@@ -40,18 +40,20 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <img
-        src="/appro-logo.svg"
-        alt="APPRO — Approbation des factures et dépenses"
-        style={{ height: '80px', width: 'auto', marginBottom: '1.25rem' }}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+        <img
+          src="/appro-logo.svg"
+          alt="APPRO — Approbation des factures et dépenses"
+          style={{ height: '80px', width: 'auto' }}
+        />
+        <img
+          src="/logo-conteneurs-experts.png"
+          alt="Conteneurs Experts"
+          style={{ height: '62px', width: 'auto' }}
+        />
+      </div>
       <div style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <img
-            src="/logo-conteneurs-experts.png"
-            alt="Conteneurs Experts"
-            style={{ height: '80px', width: 'auto' }}
-          />
           <div>
             <h1 style={{ margin: 0 }}>Dashboard</h1>
             <p style={{ margin: '0.25rem 0 0 0' }}>Bienvenue, {user.name}</p>
