@@ -1,5 +1,12 @@
 import { Resend } from 'resend';
 
+// Domaine vérifié dans Resend le 2026-08-04 (DKIM + SPF + MX confirmés).
+// Le sous-domaine notifications. ne RECOIT pas de courriel : son MX ne sert
+// qu'aux retours techniques d'Amazon SES. Les réponses des approbateurs sont
+// donc redirigées vers la boîte des comptes payables.
+const FROM_ADDRESS = 'APPRO <no-reply@notifications.conteneursexperts.com>';
+const REPLY_TO = process.env.COMPTA_EMAIL || 'payables@conteneursexperts.com';
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendResetEmail(
@@ -28,7 +35,8 @@ export async function sendResetEmail(
     `;
 
     const result = await resend.emails.send({
-      from: 'Approbation Factures <onboarding@resend.dev>',
+      from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to: recipientEmail,
       subject: '🔑 Réinitialisation de votre mot de passe',
       html,
@@ -95,7 +103,8 @@ export async function sendApprovalEmail(
     }
 
     const result = await resend.emails.send({
-      from: 'Approbation Factures <onboarding@resend.dev>',
+      from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to: recipientEmail,
       subject,
       html,
@@ -142,7 +151,8 @@ export async function sendApprovalRequestEmail(
     `;
 
     const result = await resend.emails.send({
-      from: 'Approbation Factures <onboarding@resend.dev>',
+      from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to: approverEmail,
       subject: `📋 Nouvelle facture à approuver: ${documentName}`,
       html,
@@ -247,7 +257,8 @@ export async function sendMonthlyExpenseBatch(
     `;
 
     const result = await resend.emails.send({
-      from: 'Approbation Factures <onboarding@resend.dev>',
+      from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to: toEmail,
       subject: `💳 Dépenses Visa — ${periodLabel} (${rows.length} dépense${rows.length > 1 ? 's' : ''})`,
       html,
