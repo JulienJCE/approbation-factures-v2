@@ -128,6 +128,18 @@ export default function Dashboard() {
             ✅ Approbation
           </Link>
           <Link 
+            href="/christine/expenses"
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#1e90ff',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px'
+            }}
+          >
+            💳 Comptabilité Visa
+          </Link>
+          <Link 
             href="/notifications"
             style={{
               padding: '0.75rem 1.5rem',
