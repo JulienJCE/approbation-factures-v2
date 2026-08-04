@@ -29,6 +29,42 @@ export default function Volet2Employe() {
     // On garde le code Visa pour faciliter les soumissions multiples
   };
 
+  /**
+   * Prépare le fichier avant l'envoi :
+   * - PDF : inchangé
+   * - Photo (JPG/PNG/HEIC) : redimensionnée (max 2000 px) et réencodée en
+   *   JPEG ~85 % via canvas → poids réduit (les photos de téléphone dépassent
+   *   la limite d'upload) et compatibilité iPhone (HEIC → JPEG)
+   */
+  const prepareFile = async (f: File): Promise<File> => {
+    if (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) return f;
+    try {
+      const url = URL.createObjectURL(f);
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('decode'));
+        img.src = url;
+      });
+      const maxDim = 2000;
+      const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.85)
+      );
+      if (!blob) return f;
+      const baseName = f.name.replace(/\.\w+$/, '') || 'recu';
+      return new File([blob], baseName + '.jpg', { type: 'image/jpeg' });
+    } catch {
+      // Image non décodable par ce navigateur → on laisse le serveur trancher
+      return f;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
@@ -39,7 +75,7 @@ export default function Volet2Employe() {
       return;
     }
     if (!file) {
-      setMessage('❌ Veuillez sélectionner le reçu PDF');
+      setMessage('❌ Veuillez sélectionner le reçu (PDF ou photo)');
       return;
     }
     const amountNum = parseFloat(amount);
@@ -58,11 +94,12 @@ export default function Volet2Employe() {
 
     setSubmitting(true);
     try {
+      const prepared = await prepareFile(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', prepared);
       formData.append('type', 'visa');
       formData.append('volet', '2');
-      formData.append('fileName', file.name);
+      formData.append('fileName', prepared.name);
       formData.append('visaCode', visaCode.trim().toUpperCase());
       formData.append('approuveurId', '');
       formData.append('amount', amount);
@@ -121,18 +158,21 @@ export default function Volet2Employe() {
         </div>
 
         <div style={fieldStyle}>
-          <label style={labelStyle}>Reçu (PDF) *</label>
+          <label style={labelStyle}>Reçu (PDF ou photo) *</label>
           <input
             type="file"
-            accept=".pdf"
+            accept="image/*,.pdf,application/pdf"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             disabled={submitting}
-            style={{ padding: '0.5rem' }}
+            style={{ padding: '0.5rem', maxWidth: '100%' }}
           />
+          <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
+            📱 Sur téléphone : vous pouvez prendre le reçu en photo directement.
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '140px' }}>
             <label style={labelStyle}>Montant total * ($)</label>
             <input
               type="number"
@@ -145,7 +185,7 @@ export default function Volet2Employe() {
               style={inputStyle}
             />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: '140px' }}>
             <label style={labelStyle}>TPS ($)</label>
             <input
               type="number"
@@ -158,7 +198,7 @@ export default function Volet2Employe() {
               style={inputStyle}
             />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: '140px' }}>
             <label style={labelStyle}>TVQ ($)</label>
             <input
               type="number"

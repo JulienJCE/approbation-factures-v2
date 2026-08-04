@@ -197,3 +197,30 @@ export function generateStampSVG(
 
   return svg;
 }
+
+/**
+ * Convertit une image (JPEG ou PNG) en document PDF d'une page (format
+ * lettre, portrait), image centrée et ajustée avec marges. Utilisé pour
+ * les reçus photographiés au téléphone (Volet 2) afin que le tamponnage
+ * et l'archivage restent uniformes en PDF.
+ */
+export async function imageToPdf(
+  bytes: ArrayBuffer | Uint8Array,
+  mime: string
+): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create();
+  const img =
+    mime === 'image/png' ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+
+  const pageW = 612; // Lettre 8.5in
+  const pageH = 792; // Lettre 11in
+  const margin = 24;
+  const scale = Math.min((pageW - margin * 2) / img.width, (pageH - margin * 2) / img.height);
+  const w = img.width * scale;
+  const h = img.height * scale;
+
+  const page = pdfDoc.addPage([pageW, pageH]);
+  page.drawImage(img, { x: (pageW - w) / 2, y: (pageH - h) / 2, width: w, height: h });
+
+  return pdfDoc.save();
+}

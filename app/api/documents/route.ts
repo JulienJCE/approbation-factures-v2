@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createDocument, getDocuments, isValidVisaCode, getVisaRouting, getPersonneById } from '@/lib/db';
 import { put } from '@vercel/blob';
 import { sendApprovalRequestEmail } from '@/lib/email';
-import { applyStamp } from '@/lib/pdf-stamp';
+import { applyStamp, imageToPdf } from '@/lib/pdf-stamp';
 
 export async function POST(request: NextRequest) {
   try {
@@ -89,7 +89,21 @@ export async function POST(request: NextRequest) {
     if (type === 'visa' && file && pdfUrl) {
       try {
         const routing = getVisaRouting(visaCode);
-        let stampedBytes = await applyStamp(await file.arrayBuffer(), 'visa');
+        const raw = await file.arrayBuffer();
+        const mime = (file.type || '').toLowerCase();
+
+        // Photo de reçu (JPG/PNG) → convertie en PDF une page avant tamponnage
+        let pdfBytes: Uint8Array | ArrayBuffer = raw;
+        if (mime === 'image/jpeg' || mime === 'image/jpg' || mime === 'image/png') {
+          pdfBytes = await imageToPdf(raw, mime === 'image/png' ? 'image/png' : 'image/jpeg');
+        } else if (mime && mime !== 'application/pdf') {
+          return NextResponse.json(
+            { error: 'Format non supporté — utilisez un PDF ou une photo JPG/PNG' },
+            { status: 400 }
+          );
+        }
+
+        let stampedBytes = await applyStamp(pdfBytes, 'visa');
         if (routing?.autoApprove) {
           const approbateur = await getPersonneById(routing.approuveurId);
           stampedBytes = await applyStamp(
@@ -100,7 +114,8 @@ export async function POST(request: NextRequest) {
             -160
           );
         }
-        const stampedBlob = await put(`stamped/${Date.now()}-${fileName}`, Buffer.from(stampedBytes), {
+        const stampedName = fileName.replace(/\.(jpe?g|png|pdf|heic)$/i, '') + '.pdf';
+        const stampedBlob = await put(`stamped/${Date.now()}-${stampedName}`, Buffer.from(stampedBytes), {
           access: 'public',
           contentType: 'application/pdf',
         });
