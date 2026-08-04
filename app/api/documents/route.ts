@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createDocument, getDocuments, isValidVisaCode, getVisaRouting, getPersonneById } from '@/lib/db';
 import { put } from '@vercel/blob';
 import { sendApprovalRequestEmail } from '@/lib/email';
+import { applyStamp } from '@/lib/pdf-stamp';
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,6 +79,35 @@ export async function POST(request: NextRequest) {
           finalUploadedBy = employe.nom;
           finalUploadedByEmail = employe.email;
         }
+      }
+    }
+
+    // Tamponnage du reçu à la capture (Volet 2) :
+    // - tampon VISA (bleu, centré) immédiatement
+    // - si auto-approbation (Pierjean/Emre) : tampon APPROUVÉ (rouge) ajouté
+    //   simultanément, décalé vers le bas pour que les deux restent lisibles
+    if (type === 'visa' && file && pdfUrl) {
+      try {
+        const routing = getVisaRouting(visaCode);
+        let stampedBytes = await applyStamp(await file.arrayBuffer(), 'visa');
+        if (routing?.autoApprove) {
+          const approbateur = await getPersonneById(routing.approuveurId);
+          stampedBytes = await applyStamp(
+            stampedBytes,
+            'approved',
+            approbateur?.nom || 'Auto-approuvé',
+            new Date(),
+            -160
+          );
+        }
+        const stampedBlob = await put(`stamped/${Date.now()}-${fileName}`, Buffer.from(stampedBytes), {
+          access: 'public',
+          contentType: 'application/pdf',
+        });
+        pdfUrl = stampedBlob.url;
+      } catch (err) {
+        // En cas d'échec du tamponnage, on conserve l'original (non bloquant)
+        console.error('Stamp-at-capture error (original conservé):', err);
       }
     }
 

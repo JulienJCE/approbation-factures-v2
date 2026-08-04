@@ -37,7 +37,9 @@ export async function POST(
           pdfBytes,
           'approved',
           approverName || 'Approbateur',
-          new Date()
+          new Date(),
+          // Reçu Visa : le tampon VISA est déjà au centre → décaler le rouge
+          original.type === 'visa' ? -160 : 0
         );
 
         const stampedName = `stamped/${Date.now()}-${original.fileName}`;

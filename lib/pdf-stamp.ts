@@ -35,7 +35,8 @@ export async function applyStamp(
   pdfBytes: Uint8Array | ArrayBuffer,
   stampType: 'visa' | 'approved',
   approverName?: string,
-  timestamp?: Date
+  timestamp?: Date,
+  offsetY: number = 0
 ): Promise<Uint8Array> {
   const config = STAMP_CONFIGS[stampType];
   const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -52,15 +53,37 @@ export async function applyStamp(
     const page = firstPage;
     const { width, height } = page.getSize();
     const centerX = width / 2;
-    const centerY = height / 2;
+    const centerY = height / 2 + offsetY;
 
-    // Bordure allongée horizontalement, plus courte verticalement (comme sur dessin)
+    // pdf-lib pivote autour du point (x, y) fourni (coin/ancre), pas du centre.
+    // Pour centrer un élément pivoté sur (cx, cy), on recule l'ancre de la
+    // demi-taille locale, projetée par la rotation.
+    const rad = (config.rotation * Math.PI) / 180;
+    const cosT = Math.cos(rad);
+    const sinT = Math.sin(rad);
+    const anchorFor = (cx: number, cy: number, halfW: number, halfH: number) => ({
+      x: cx - halfW * cosT + halfH * sinT,
+      y: cy - halfW * sinT - halfH * cosT,
+    });
+    // Décale un point de (du, dv) dans le repère local pivoté
+    const localShift = (du: number, dv: number) => ({
+      dx: du * cosT - dv * sinT,
+      dy: du * sinT + dv * cosT,
+    });
+
+    const line = config.text;
+    const textWidth = font.widthOfTextAtSize(line, config.fontSize);
+
+    // Cadre allongé proportionnel au texte (si configuré)
     if (config.border) {
+      const bw = textWidth + 120;
+      const bh = config.fontSize + 30;
+      const a = anchorFor(centerX, centerY, bw / 2, bh / 2);
       page.drawRectangle({
-        x: centerX - 320,
-        y: centerY - 28,
-        width: 640,
-        height: 75,
+        x: a.x,
+        y: a.y,
+        width: bw,
+        height: bh,
         borderColor: color,
         borderWidth: 3,
         borderOpacity: config.opacity,
@@ -68,30 +91,33 @@ export async function applyStamp(
       });
     }
 
-    // Texte principal - remonté pour laisser place au nom en dessous
-    const line = config.text;
-    const textWidth = font.widthOfTextAtSize(line, config.fontSize);
-    page.drawText(line, {
-      x: centerX - textWidth / 2,
-      y: centerY + 5,
-      size: config.fontSize,
-      font,
-      color,
-      opacity: config.opacity,
-      rotate: degrees(config.rotation),
-    });
+    // Texte principal centré (ancre = baseline gauche → demi-hauteur ≈ 0.35 × taille)
+    {
+      const a = anchorFor(centerX, centerY, textWidth / 2, config.fontSize * 0.35);
+      page.drawText(line, {
+        x: a.x,
+        y: a.y,
+        size: config.fontSize,
+        font,
+        color,
+        opacity: config.opacity,
+        rotate: degrees(config.rotation),
+      });
+    }
 
-    // Détails (approbateur + date) - juste en-dessous du texte principal, dans le cadre
+    // Détails (approbateur + date) — sous le texte principal, même inclinaison
     if (stampType === 'approved' && approverName && timestamp) {
       const detailText = `${approverName} · ${timestamp.toLocaleDateString('fr-CA')}`;
       const detailWidth = smallFont.widthOfTextAtSize(detailText, 12);
+      const shift = localShift(0, -(config.fontSize * 0.35 + 20));
+      const a = anchorFor(centerX + shift.dx, centerY + shift.dy, detailWidth / 2, 12 * 0.35);
       page.drawText(detailText, {
-        x: centerX - detailWidth / 2,
-        y: centerY - 20,
+        x: a.x,
+        y: a.y,
         size: 12,
         font: smallFont,
         color,
-        opacity: config.opacity + 0.2,
+        opacity: Math.min(config.opacity + 0.2, 1),
         rotate: degrees(config.rotation),
       });
     }
