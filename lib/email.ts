@@ -272,8 +272,6 @@ export async function sendMonthlyExpenseBatch(
       s === 'approved' ? '✅ Approuvée' : s === 'rejected' ? '❌ Rejetée' : '⏳ En attente';
 
     const totalAmount = rows.reduce((sum, r) => sum + (r.amount || 0), 0);
-    const totalTps = rows.reduce((sum, r) => sum + (r.amountTps || 0), 0);
-    const totalTvq = rows.reduce((sum, r) => sum + (r.amountTvq || 0), 0);
 
     const tableRows = rows
       .map(
@@ -282,8 +280,6 @@ export async function sendMonthlyExpenseBatch(
           <td style="padding: 8px; border: 1px solid #ddd;">${r.employeName}</td>
           <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">${r.date}</td>
           <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(r.amount)}</td>
-          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(r.amountTps)}</td>
-          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(r.amountTvq)}</td>
           <td style="padding: 8px; border: 1px solid #ddd;">${r.category}${r.category === 'Autre' && r.categoryOtherDescription ? ` (${r.categoryOtherDescription})` : ''}</td>
           <td style="padding: 8px; border: 1px solid #ddd;">${r.expenseExplanation || '—'}</td>
           <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">${statusLabel(r.status)}</td>
@@ -294,17 +290,19 @@ export async function sendMonthlyExpenseBatch(
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto;">
-        <h2 style="color: #1e90ff;">💳 Dépenses Visa — ${periodLabel}</h2>
+        <h2 style="color: #1e90ff;">📊 Récapitulatif du mois — Dépenses Visa</h2>
         <p>Bonjour Christine,</p>
-        <p>Voici le récapitulatif mensuel des dépenses Visa soumises durant la période <strong>${periodLabel}</strong> (${rows.length} dépense${rows.length > 1 ? 's' : ''}).</p>
+        <p>Voici la vue d'ensemble des dépenses Visa de la période <strong>${periodLabel}</strong> — ${rows.length} dépense${rows.length > 1 ? 's' : ''} au total.</p>
+        <div style="background: #fff8e1; border-left: 4px solid #ffc107; padding: 12px 16px; margin: 16px 0; font-size: 13px;">
+          <strong>Ce courriel est un récapitulatif, pas une demande de traitement.</strong><br>
+          Chaque dépense approuvée vous a déjà été envoyée individuellement, avec son reçu tamponné en pièce jointe, au moment de son approbation. Ce tableau sert à boucler le mois et à repérer ce qui serait resté en attente.
+        </div>
         <table style="border-collapse: collapse; width: 100%; font-size: 13px;">
           <thead>
             <tr style="background: #f0f4f8;">
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Employé</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Date</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Montant</th>
-              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">TPS</th>
-              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">TVQ</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Catégorie</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Explication</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Statut</th>
@@ -316,13 +314,11 @@ export async function sendMonthlyExpenseBatch(
             <tr style="background: #f0f4f8; font-weight: bold;">
               <td style="padding: 8px; border: 1px solid #ddd;" colspan="2">TOTAL</td>
               <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(totalAmount)}</td>
-              <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(totalTps)}</td>
-              <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(totalTvq)}</td>
               <td style="padding: 8px; border: 1px solid #ddd;" colspan="4"></td>
             </tr>
           </tfoot>
         </table>
-        <p style="margin-top: 20px; font-size: 13px; color: #444;">Les dépenses en attente ou rejetées sont incluses à titre informatif — à traiter selon votre jugement.</p>
+        <p style="margin-top: 20px; font-size: 13px; color: #444;">Les dépenses en attente ou rejetées figurent au tableau pour donner la vue complète du mois. Les montants de taxes ne sont pas ventilés ici — l'employé saisit le montant total et la ventilation se fait au codage comptable.</p>
         <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;">
         <p style="font-size: 12px; color: #666;">Ce courriel a été envoyé automatiquement par le système d'approbation Conteneurs Experts le 1er du mois.</p>
       </div>
@@ -332,7 +328,7 @@ export async function sendMonthlyExpenseBatch(
       from: FROM_ADDRESS,
       replyTo: REPLY_TO,
       to: toEmail,
-      subject: `💳 Dépenses Visa — ${periodLabel} (${rows.length} dépense${rows.length > 1 ? 's' : ''})`,
+      subject: `📊 Récapitulatif du mois — Dépenses Visa ${periodLabel} (${rows.length} dépense${rows.length > 1 ? 's' : ''})`,
       html,
     });
 
