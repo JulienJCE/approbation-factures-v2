@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateDocumentStatus, logEmail, getDocumentById, saveStampedPdfUrl } from '@/lib/db';
 import { applyStamp } from '@/lib/pdf-stamp';
-import { sendApprovalEmail } from '@/lib/email';
+import { sendApprovalEmail, sendVisaApprovedToPayables } from '@/lib/email';
 import { put } from '@vercel/blob';
 
 // Adresse email de la comptabilité qui reçoit les notifications
@@ -75,6 +75,24 @@ export async function POST(
 
         emailSent = emailResult.ok;
         if (!emailResult.ok) emailError = emailResult.error || 'Unknown';
+
+        // NOUVEAU : Pour Volet 2 Visa approuvé, envoyer AUSSI le PDF tamponné à payables@
+        if (doc.type === 'visa' && status === 'approved' && stampedUrl) {
+          try {
+            const payablesResult = await sendVisaApprovedToPayables(
+              doc.fileName,
+              approverName || 'Approbateur',
+              stampedUrl,
+              original?.submittedByName || 'Employé',
+              doc.amount,
+              doc.category
+            );
+            // Si l'envoi échoue, logguer mais ne pas bloquer le reste
+            if (!payablesResult.ok) console.warn('Payables email failed:', payablesResult.error);
+          } catch (err) {
+            console.error('Payables email error:', err);
+          }
+        }
 
         // Logguer aussi en DB pour la page notifications
         await logEmail({

@@ -168,6 +168,78 @@ export async function sendApprovalRequestEmail(
   }
 }
 
+// NOUVEAU (2026-08-19) : Email immédiat pour Visa approuvé, envoyé à payables@
+// Le PDF tamponné « APPROUVÉ POUR PAIEMENT » est joint pour traitement comptable
+export async function sendVisaApprovedToPayables(
+  documentName: string,
+  approverName: string,
+  stampedPdfUrl: string,
+  employeeName: string,
+  amount?: number,
+  category?: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const amountStr = amount ? `${amount.toFixed(2)} $` : 'N/A';
+    const categoryStr = category || 'N/A';
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="https://approbation-factures-v2.vercel.app/logo-conteneurs-experts.png" alt="Conteneurs Experts" style="height: 80px;">
+        </div>
+        <h2 style="color: #28a745;">✅ Dépense Visa approuvée</h2>
+        <p>Bonjour,</p>
+        <p>Une dépense Visa a été approuvée et est prête pour traitement comptable.</p>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>Employé:</strong> ${employeeName}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Document:</strong> ${documentName}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Montant:</strong> ${amountStr}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Catégorie:</strong> ${categoryStr}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Approuvé par:</strong> ${approverName}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Date:</strong> ${new Date().toLocaleString('fr-CA', { timeZone: 'America/Toronto' })}</p>
+        </div>
+        <p>📎 <strong>Le reçu tamponné est joint à ce courriel.</strong></p>
+        <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;">
+        <p style="font-size: 12px; color: #666;">Ce courriel a été envoyé automatiquement par le système d'approbation Conteneurs Experts.</p>
+      </div>
+    `;
+
+    // Télécharger et joindre le PDF tamponné
+    const attachments: Array<{ filename: string; content: string }> = [];
+    try {
+      const pdfRes = await fetch(stampedPdfUrl);
+      if (pdfRes.ok) {
+        const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
+        attachments.push({
+          filename: documentName,
+          content: pdfBuffer.toString('base64'),
+        });
+      }
+    } catch (err) {
+      console.error('PDF fetch for payables failed:', err);
+      // On continue quand même
+    }
+
+    const result = await resend.emails.send({
+      from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
+      to: REPLY_TO, // Envoyer à payables@
+      subject: `✅ Dépense Visa approuvée: ${documentName}`,
+      html,
+      attachments: attachments.length > 0 ? attachments : undefined,
+    });
+
+    if (result.error) {
+      return { ok: false, error: JSON.stringify(result.error) };
+    }
+
+    return { ok: true };
+  } catch (error) {
+    console.error('Payables visa email error:', error);
+    return { ok: false, error: String(error) };
+  }
+}
+
 export interface ExpenseBatchRow {
   employeName: string;
   date: string;

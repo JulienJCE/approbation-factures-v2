@@ -10,8 +10,6 @@ export default function Volet2Employe() {
   const [visaCode, setVisaCode] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [amount, setAmount] = useState('');
-  const [amountTps, setAmountTps] = useState('');
-  const [amountTvq, setAmountTvq] = useState('');
   const [category, setCategory] = useState('');
   const [categoryOtherDescription, setCategoryOtherDescription] = useState('');
   const [expenseExplanation, setExpenseExplanation] = useState('');
@@ -21,8 +19,6 @@ export default function Volet2Employe() {
   const resetForm = () => {
     setFile(null);
     setAmount('');
-    setAmountTps('');
-    setAmountTvq('');
     setCategory('');
     setCategoryOtherDescription('');
     setExpenseExplanation('');
@@ -103,8 +99,6 @@ export default function Volet2Employe() {
       formData.append('visaCode', visaCode.trim().toUpperCase());
       formData.append('approuveurId', '');
       formData.append('amount', amount);
-      if (amountTps) formData.append('amountTps', amountTps);
-      if (amountTvq) formData.append('amountTvq', amountTvq);
       formData.append('category', category);
       if (categoryOtherDescription) formData.append('categoryOtherDescription', categoryOtherDescription);
       if (expenseExplanation) formData.append('expenseExplanation', expenseExplanation);
@@ -171,46 +165,18 @@ export default function Volet2Employe() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '140px' }}>
-            <label style={labelStyle}>Montant total * ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              disabled={submitting}
-              style={inputStyle}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: '140px' }}>
-            <label style={labelStyle}>TPS ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={amountTps}
-              onChange={(e) => setAmountTps(e.target.value)}
-              placeholder="0.00"
-              disabled={submitting}
-              style={inputStyle}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: '140px' }}>
-            <label style={labelStyle}>TVQ ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={amountTvq}
-              onChange={(e) => setAmountTvq(e.target.value)}
-              placeholder="0.00"
-              disabled={submitting}
-              style={inputStyle}
-            />
-          </div>
+        <div style={fieldStyle}>
+          <label style={labelStyle}>Montant * ($)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            disabled={submitting}
+            style={inputStyle}
+          />
         </div>
 
         <div style={fieldStyle}>
