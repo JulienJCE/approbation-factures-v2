@@ -1,0 +1,11 @@
+{
+  "remoteName": "origin",
+  "projects": [
+    {
+      "id": "prj_ptF7phRQNBS7nxXcb4ESQ0DaG3EB",
+      "name": "approbation-factures",
+      "directory": ".",
+      "orgId": "team_0BuaGH365PaBXq26XhFZtDHq"
+    }
+  ]
+}
