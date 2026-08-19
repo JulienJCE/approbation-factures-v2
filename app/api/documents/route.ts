@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createDocument, getDocuments, isValidVisaCode, getVisaRouting, getPersonneById } from '@/lib/db';
 import { put } from '@vercel/blob';
-import { sendApprovalRequestEmail } from '@/lib/email';
+import { sendApprovalRequestEmail, sendVisaApprovedToPayables } from '@/lib/email';
 import { applyStamp, imageToPdf } from '@/lib/pdf-stamp';
 
 export async function POST(request: NextRequest) {
@@ -161,6 +161,23 @@ export async function POST(request: NextRequest) {
         requestEmailError = emailResult.error || null;
       } else {
         requestEmailError = 'Approbateur introuvable';
+      }
+    } else if (doc.status === 'approved' && type === 'visa' && pdfUrl) {
+      // Auto-approbation (PS-2026, EK-2026) : la dépense ne passera jamais par
+      // /api/documents/[id]/approve, donc l'envoi vers payables@ doit se faire ici.
+      try {
+        const approbateur = await getPersonneById(finalApprouveurId);
+        const payablesResult = await sendVisaApprovedToPayables(
+          fileName,
+          approbateur?.nom || 'Auto-approuvé',
+          pdfUrl,
+          finalUploadedBy,
+          amount,
+          category
+        );
+        if (!payablesResult.ok) console.warn('Payables email failed:', payablesResult.error);
+      } catch (err) {
+        console.error('Payables email error (auto-approve):', err);
       }
     }
 
