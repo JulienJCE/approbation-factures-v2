@@ -42,7 +42,13 @@ export async function POST(
           original.type === 'visa' ? -160 : 0
         );
 
-        const stampedName = `stamped/${Date.now()}-${original.fileName}`;
+        // Le contenu re-televerse est TOUJOURS un PDF (le recu photo a ete
+        // converti par imageToPdf a la capture). Sans cette normalisation,
+        // pdf_url se termine par .jpg et les liens « Reçu » ouvrent un PDF
+        // sous une extension image — illisible. Jumeau de asPdfName() dans
+        // lib/email.ts ; garder les deux alignes.
+        const baseName = original.fileName.replace(/\.(jpe?g|png|heic|heif|webp|pdf)$/i, '') + '.pdf';
+        const stampedName = `stamped/${Date.now()}-${baseName}`;
         const blob = await put(stampedName, Buffer.from(stampedBytes), {
           access: 'public',
           contentType: 'application/pdf',
