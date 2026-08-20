@@ -17,6 +17,7 @@ interface ExpenseDoc {
   category?: string;
   categoryOtherDescription?: string;
   expenseExplanation?: string;
+  cardType?: 'company' | 'personal';
   pdfUrl?: string;
   createdAt: string;
   batchSentAt?: string;
@@ -93,7 +94,8 @@ export default function ChristineExpenses() {
   const exportCsv = () => {
     const esc = (v: any) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
     const num = (n?: number) => (n != null ? String(n).replace('.', ',') : '');
-    const header = ['Date', 'Employé', 'Montant', 'TPS', 'TVQ', 'Catégorie', 'Explication', 'Statut', 'Fichier', 'Reçu (URL)'];
+    const cardCsv = (c?: string) => (c === 'personal' ? 'Personnelle' : 'Compagnie');
+    const header = ['Date', 'Employé', 'Montant', 'TPS', 'TVQ', 'Catégorie', 'Explication', 'Moyen de paiement', 'Statut', 'Fichier', 'Reçu (URL)'];
     const lines = filtered.map((d) =>
       [
         fmtDate(d.createdAt),
@@ -103,6 +105,7 @@ export default function ChristineExpenses() {
         num(d.amountTvq),
         esc(d.category === 'Autre' && d.categoryOtherDescription ? `Autre (${d.categoryOtherDescription})` : d.category),
         esc(d.expenseExplanation),
+        esc(cardCsv(d.cardType)),
         esc(STATUS_LABELS[d.status]?.replace(/^\S+ /, '') || d.status),
         esc(d.fileName),
         esc(d.pdfUrl),
@@ -194,6 +197,7 @@ export default function ChristineExpenses() {
               <th style={{ ...thStyle, textAlign: 'right' }}>TVQ</th>
               <th style={thStyle}>Catégorie</th>
               <th style={thStyle}>Explication</th>
+              <th style={thStyle}>Moyen de paiement</th>
               <th style={thStyle}>Statut</th>
               <th style={thStyle}>Reçu</th>
               <th style={thStyle}>Batch</th>
@@ -212,6 +216,17 @@ export default function ChristineExpenses() {
                   {d.category === 'Autre' && d.categoryOtherDescription ? ` (${d.categoryOtherDescription})` : ''}
                 </td>
                 <td style={tdStyle}>{d.expenseExplanation || '—'}</td>
+                <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
+                  <span style={{
+                    background: d.cardType === 'personal' ? '#dc3545' : '#007bff',
+                    color: '#fff',
+                    padding: '2px 7px',
+                    borderRadius: '3px',
+                    fontSize: '0.75rem',
+                  }}>
+                    {d.cardType === 'personal' ? 'Personnelle' : 'Compagnie'}
+                  </span>
+                </td>
                 <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>{STATUS_LABELS[d.status] || d.status}</td>
                 <td style={tdStyle}>
                   {d.pdfUrl ? (
@@ -230,7 +245,7 @@ export default function ChristineExpenses() {
               <td style={tdRight}>{fmtMoney(totals.amount)}</td>
               <td style={tdRight}>{fmtMoney(totals.tps)}</td>
               <td style={tdRight}>{fmtMoney(totals.tvq)}</td>
-              <td style={tdStyle} colSpan={5}></td>
+              <td style={tdStyle} colSpan={6}></td>
             </tr>
           </tfoot>
         </table>

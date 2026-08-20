@@ -255,6 +255,7 @@ export interface ExpenseBatchRow {
   category: string;
   categoryOtherDescription?: string;
   expenseExplanation?: string;
+  cardType?: 'company' | 'personal';
   status: string;
   pdfUrl?: string;
 }
@@ -276,6 +277,13 @@ export async function sendMonthlyExpenseBatch(
     const statusLabel = (s: string) =>
       s === 'approved' ? '✅ Approuvée' : s === 'rejected' ? '❌ Rejetée' : '⏳ En attente';
 
+    // Badge de moyen de paiement. Les dépenses antérieures au 2026-08-20 n'ont
+    // pas de card_type saisi : la colonne par défaut vaut 'company'.
+    const cardLabel = (c?: string) =>
+      c === 'personal'
+        ? '<span style="background:#dc3545;color:#fff;padding:2px 7px;border-radius:3px;font-size:12px;">Personnelle</span>'
+        : '<span style="background:#007bff;color:#fff;padding:2px 7px;border-radius:3px;font-size:12px;">Compagnie</span>';
+
     const totalAmount = rows.reduce((sum, r) => sum + (r.amount || 0), 0);
 
     const tableRows = rows
@@ -287,6 +295,7 @@ export async function sendMonthlyExpenseBatch(
           <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(r.amount)}</td>
           <td style="padding: 8px; border: 1px solid #ddd;">${r.category}${r.category === 'Autre' && r.categoryOtherDescription ? ` (${r.categoryOtherDescription})` : ''}</td>
           <td style="padding: 8px; border: 1px solid #ddd;">${r.expenseExplanation || '—'}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">${cardLabel(r.cardType)}</td>
           <td style="padding: 8px; border: 1px solid #ddd; white-space: nowrap;">${statusLabel(r.status)}</td>
           <td style="padding: 8px; border: 1px solid #ddd;">${r.pdfUrl ? `<a href="${r.pdfUrl}">📄 Reçu</a>` : '—'}</td>
         </tr>`
@@ -310,6 +319,7 @@ export async function sendMonthlyExpenseBatch(
               <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Montant</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Catégorie</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Explication</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Moyen de paiement</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Statut</th>
               <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Reçu</th>
             </tr>
@@ -319,7 +329,7 @@ export async function sendMonthlyExpenseBatch(
             <tr style="background: #f0f4f8; font-weight: bold;">
               <td style="padding: 8px; border: 1px solid #ddd;" colspan="2">TOTAL</td>
               <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${fmt(totalAmount)}</td>
-              <td style="padding: 8px; border: 1px solid #ddd;" colspan="4"></td>
+              <td style="padding: 8px; border: 1px solid #ddd;" colspan="5"></td>
             </tr>
           </tfoot>
         </table>

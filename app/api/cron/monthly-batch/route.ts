@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       category: doc.category || 'Autre',
       categoryOtherDescription: doc.categoryOtherDescription,
       expenseExplanation: doc.expenseExplanation,
+      cardType: doc.cardType,
       status: doc.status,
       pdfUrl: doc.pdfUrl,
     }));
