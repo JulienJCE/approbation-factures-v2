@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateDocumentStatus, logEmail, getDocumentById, saveStampedPdfUrl } from '@/lib/db';
+import { updateDocumentStatus, logEmail, getDocumentById, saveStampedPdfUrl, markApprovedStamp } from '@/lib/db';
 import { applyStamp } from '@/lib/pdf-stamp';
 import { sendApprovalEmail, sendVisaApprovedToPayables } from '@/lib/email';
 import { put } from '@vercel/blob';
@@ -43,9 +43,10 @@ export async function POST(
         );
 
         // Le contenu re-televerse est TOUJOURS un PDF (le recu photo a ete
-        // converti par imageToPdf a la capture). Sans cette normalisation,
-        // pdf_url se termine par .jpg et les liens « Reçu » ouvrent un PDF
-        // sous une extension image — illisible. Jumeau de asPdfName() dans
+        // converti par imageToPdf a la capture). Le blob est servi avec
+        // Content-Type application/pdf, donc un navigateur l'ouvre meme sous
+        // une extension .jpg — mais des qu'il est telecharge sur disque,
+        // Windows se fie a l'extension et echoue. Jumeau de asPdfName() dans
         // lib/email.ts ; garder les deux alignes.
         const baseName = original.fileName.replace(/\.(jpe?g|png|heic|heif|webp|pdf)$/i, '') + '.pdf';
         const stampedName = `stamped/${Date.now()}-${baseName}`;
@@ -56,6 +57,7 @@ export async function POST(
         stampedUrl = blob.url;
 
         await saveStampedPdfUrl(params.id, stampedUrl);
+        await markApprovedStamp(params.id);
       } catch (err) {
         stampError = String(err);
         console.error('Stamp error:', err);

@@ -146,6 +146,24 @@ export async function saveStampedPdfUrl(id: string, pdfUrlStamped: string): Prom
   await db`UPDATE documents SET pdf_url = ${pdfUrlStamped} WHERE id = ${id}`;
 }
 
+/**
+ * Inscrit le tampon 'approved' dans stamps_applied après une approbation
+ * manuelle. À l'auto-approbation, createDocument() le fait déjà ; le chemin
+ * manuel ne le faisait pas, si bien que la colonne restait {visa} alors que
+ * le tampon rouge était bel et bien apposé sur le PDF.
+ *
+ * Idempotent : n'ajoute rien si 'approved' est déjà présent. À n'appeler
+ * qu'APRÈS un tamponnage réussi, sinon on inscrit un tampon inexistant.
+ */
+export async function markApprovedStamp(id: string): Promise<void> {
+  await db`
+    UPDATE documents
+    SET stamps_applied = array_append(COALESCE(stamps_applied, '{}'::text[]), 'approved')
+    WHERE id = ${id}
+      AND NOT ('approved' = ANY(COALESCE(stamps_applied, '{}'::text[])))
+  `;
+}
+
 export async function logEmail(data: { to: string; subject: string; approuveurId: string; documentId: string; status: 'sent' | 'failed' }): Promise<JournalCourriel | null> {
   try {
     const now = new Date();
