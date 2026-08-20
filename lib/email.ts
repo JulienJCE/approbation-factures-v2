@@ -9,6 +9,17 @@ const REPLY_TO = process.env.COMPTA_EMAIL || 'payables@conteneursexperts.com';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+/**
+ * Nom de pièce jointe : le contenu joint est TOUJOURS le PDF tamponné, même
+ * quand l'employé a soumis une photo (converti par imageToPdf à la capture).
+ * Sans cette normalisation, la pièce jointe s'appelle « recu.jpg » alors
+ * qu'elle contient un PDF — Windows/Outlook tente de l'ouvrir comme image
+ * et échoue. Constaté par la comptabilité le 2026-08-20.
+ */
+function asPdfName(name: string): string {
+  return name.replace(/\.(jpe?g|png|heic|heif|webp|pdf)$/i, '') + '.pdf';
+}
+
 export async function sendResetEmail(
   recipientEmail: string,
   userName: string,
@@ -62,8 +73,8 @@ export async function sendApprovalEmail(
   try {
     const isApproved = status === 'approved';
     const subject = isApproved
-      ? `✅ Facture approuvée: ${documentName}`
-      : `❌ Facture rejetée: ${documentName}`;
+      ? `✅ Facture approuvée: ${asPdfName(documentName)}`
+      : `❌ Facture rejetée: ${asPdfName(documentName)}`;
 
     const statusText = isApproved ? 'APPROUVÉE' : 'REJETÉE';
     const statusColor = isApproved ? '#28a745' : '#dc3545';
@@ -75,7 +86,7 @@ export async function sendApprovalEmail(
         </div>
         <h2 style="color: ${statusColor};">Facture ${statusText}</h2>
         <p>Bonjour,</p>
-        <p>La facture <strong>${documentName}</strong> a été <strong style="color: ${statusColor};">${statusText.toLowerCase()}</strong> par ${approverName}.</p>
+        <p>La facture <strong>${asPdfName(documentName)}</strong> a été <strong style="color: ${statusColor};">${statusText.toLowerCase()}</strong> par ${approverName}.</p>
         <p><strong>Date:</strong> ${new Date().toLocaleString('fr-CA', { timeZone: 'America/Toronto' })}</p>
         ${isApproved ? '<p>📎 <strong>La facture tamponnée est jointe à ce courriel.</strong></p>' : ''}
         ${pdfUrl ? `<p><a href="${pdfUrl}" style="display: inline-block; background: ${statusColor}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin-top: 10px;">📄 Voir le document ${isApproved ? 'tamponné' : ''}</a></p>` : ''}
@@ -92,7 +103,7 @@ export async function sendApprovalEmail(
         if (pdfRes.ok) {
           const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
           attachments.push({
-            filename: documentName,
+            filename: asPdfName(documentName),
             content: pdfBuffer.toString('base64'),
           });
         }
@@ -140,7 +151,7 @@ export async function sendApprovalRequestEmail(
         <p>Bonjour ${approverName},</p>
         <p>Une nouvelle facture a été soumise pour votre approbation par <strong>${uploadedBy}</strong>.</p>
         <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0;">
-          <p style="margin: 0;"><strong>Document:</strong> ${documentName}</p>
+          <p style="margin: 0;"><strong>Document:</strong> ${asPdfName(documentName)}</p>
           <p style="margin: 10px 0 0 0;"><strong>Date de soumission:</strong> ${new Date().toLocaleString('fr-CA', { timeZone: 'America/Toronto' })}</p>
         </div>
         <p><a href="https://approbation-factures-v2.vercel.app/approbateur" style="display: inline-block; background: #6f42c1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-top: 10px; font-weight: bold;">✅ Approuver la facture</a></p>
@@ -154,7 +165,7 @@ export async function sendApprovalRequestEmail(
       from: FROM_ADDRESS,
       replyTo: REPLY_TO,
       to: approverEmail,
-      subject: `📋 Nouvelle facture à approuver: ${documentName}`,
+      subject: `📋 Nouvelle facture à approuver: ${asPdfName(documentName)}`,
       html,
     });
 
@@ -196,7 +207,7 @@ export async function sendVisaApprovedToPayables(
         <p>Une dépense Visa a été approuvée et est prête pour traitement comptable.</p>
         <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0;">
           <p style="margin: 0;"><strong>Employé:</strong> ${employeeName}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Document:</strong> ${documentName}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Document:</strong> ${asPdfName(documentName)}</p>
           <p style="margin: 10px 0 0 0;"><strong>Montant:</strong> ${amountStr}</p>
           <p style="margin: 10px 0 0 0;"><strong>Catégorie:</strong> ${categoryStr}</p>
           <p style="margin: 10px 0 0 0;"><strong>Approuvé par:</strong> ${approverName}</p>
@@ -216,7 +227,7 @@ export async function sendVisaApprovedToPayables(
       if (pdfRes.ok) {
         const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
         attachments.push({
-          filename: documentName,
+          filename: asPdfName(documentName),
           content: pdfBuffer.toString('base64'),
         });
       }
@@ -229,7 +240,7 @@ export async function sendVisaApprovedToPayables(
       from: FROM_ADDRESS,
       replyTo: REPLY_TO,
       to: REPLY_TO, // Envoyer à payables@
-      subject: `✅ Dépense Visa approuvée: ${documentName}`,
+      subject: `✅ Dépense Visa approuvée: ${asPdfName(documentName)}`,
       html,
       attachments: attachments.length > 0 ? attachments : undefined,
     });
