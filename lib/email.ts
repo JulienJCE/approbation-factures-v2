@@ -176,11 +176,15 @@ export async function sendVisaApprovedToPayables(
   stampedPdfUrl: string,
   employeeName: string,
   amount?: number,
-  category?: string
+  category?: string,
+  cardType?: 'company' | 'personal'
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const amountStr = amount ? `${amount.toFixed(2)} $` : 'N/A';
     const categoryStr = category || 'N/A';
+    const isPersonal = cardType === 'personal';
+    const cardTypeStr = isPersonal ? 'Carte personnelle' : 'Carte de compagnie';
+    const cardTypeColor = isPersonal ? '#dc3545' : '#007bff';
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -196,6 +200,7 @@ export async function sendVisaApprovedToPayables(
           <p style="margin: 10px 0 0 0;"><strong>Montant:</strong> ${amountStr}</p>
           <p style="margin: 10px 0 0 0;"><strong>Catégorie:</strong> ${categoryStr}</p>
           <p style="margin: 10px 0 0 0;"><strong>Approuvé par:</strong> ${approverName}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Moyen de paiement:</strong> <span style="background: ${cardTypeColor}; color: #fff; padding: 3px 8px; border-radius: 3px; font-size: 13px;">${cardTypeStr}</span></p>
           <p style="margin: 10px 0 0 0;"><strong>Date:</strong> ${new Date().toLocaleString('fr-CA', { timeZone: 'America/Toronto' })}</p>
         </div>
         <p>📎 <strong>Le reçu tamponné est joint à ce courriel.</strong></p>

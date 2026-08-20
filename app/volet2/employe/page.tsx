@@ -13,6 +13,7 @@ export default function Volet2Employe() {
   const [category, setCategory] = useState('');
   const [categoryOtherDescription, setCategoryOtherDescription] = useState('');
   const [expenseExplanation, setExpenseExplanation] = useState('');
+  const [cardType, setCardType] = useState<'company' | 'personal'>('company');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -22,6 +23,7 @@ export default function Volet2Employe() {
     setCategory('');
     setCategoryOtherDescription('');
     setExpenseExplanation('');
+    setCardType('company');
     // On garde le code Visa pour faciliter les soumissions multiples
   };
 
@@ -87,6 +89,10 @@ export default function Volet2Employe() {
       setMessage('❌ Veuillez décrire la dépense (catégorie Autre)');
       return;
     }
+    if (!expenseExplanation.trim()) {
+      setMessage('❌ Veuillez fournir une explication de la dépense');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -100,6 +106,7 @@ export default function Volet2Employe() {
       formData.append('approuveurId', '');
       formData.append('amount', amount);
       formData.append('category', category);
+      formData.append('cardType', cardType);
       if (categoryOtherDescription) formData.append('categoryOtherDescription', categoryOtherDescription);
       if (expenseExplanation) formData.append('expenseExplanation', expenseExplanation);
 
@@ -210,7 +217,35 @@ export default function Volet2Employe() {
         )}
 
         <div style={fieldStyle}>
-          <label style={labelStyle}>Explication</label>
+          <label style={labelStyle}>Quelle carte avez-vous utilisée? *</label>
+          <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="cardType"
+                value="company"
+                checked={cardType === 'company'}
+                onChange={() => setCardType('company')}
+                disabled={submitting}
+              />
+              <span>Carte de compagnie</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="cardType"
+                value="personal"
+                checked={cardType === 'personal'}
+                onChange={() => setCardType('personal')}
+                disabled={submitting}
+              />
+              <span>Carte personnelle</span>
+            </label>
+          </div>
+        </div>
+
+        <div style={fieldStyle}>
+          <label style={labelStyle}>Explication *</label>
           <textarea
             value={expenseExplanation}
             onChange={(e) => setExpenseExplanation(e.target.value)}

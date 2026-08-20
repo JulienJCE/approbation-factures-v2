@@ -8,6 +8,7 @@ export interface Personne {
 export type DocumentStatus = 'pending' | 'approved' | 'rejected';
 export type DocumentType = 'invoice' | 'visa';
 export type Volet = 1 | 2;
+export type CardType = 'company' | 'personal';
 
 export type ExpenseCategory =
   | 'Restaurant'
@@ -37,6 +38,7 @@ export interface Document {
   category?: ExpenseCategory;
   categoryOtherDescription?: string;
   expenseExplanation?: string;
+  cardType?: CardType;
   batchSentAt?: Date;
   createdAt: Date;
   updatedAt: Date;

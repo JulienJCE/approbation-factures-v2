@@ -85,7 +85,8 @@ export async function POST(
               stampedUrl,
               original?.submittedByName || 'Employé',
               doc.amount,
-              doc.category
+              doc.category,
+              doc.cardType ?? original?.cardType
             );
             // Si l'envoi échoue, logguer mais ne pas bloquer le reste
             if (!payablesResult.ok) console.warn('Payables email failed:', payablesResult.error);

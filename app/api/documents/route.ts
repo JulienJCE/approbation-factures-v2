@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     const category = (formData.get('category') as string) || undefined;
     const categoryOtherDescription = (formData.get('categoryOtherDescription') as string) || undefined;
     const expenseExplanation = (formData.get('expenseExplanation') as string) || undefined;
+    const cardType = (formData.get('cardType') as 'company' | 'personal') || 'company';
 
     if (!fileName || !volet) {
       return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 });
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest) {
       }
       if (category === 'Autre' && !categoryOtherDescription?.trim()) {
         return NextResponse.json({ error: 'Description requise pour la catégorie Autre' }, { status: 400 });
+      }
+      if (!expenseExplanation?.trim()) {
+        return NextResponse.json({ error: 'Explication requise' }, { status: 400 });
       }
     }
 
@@ -141,6 +145,7 @@ export async function POST(request: NextRequest) {
       category,
       categoryOtherDescription,
       expenseExplanation,
+      cardType,
     });
 
     // Envoyer un email à l'approbateur pour l'aviser (sauf si auto-approuvé)
@@ -173,7 +178,8 @@ export async function POST(request: NextRequest) {
           pdfUrl,
           finalUploadedBy,
           amount,
-          category
+          category,
+          cardType
         );
         if (!payablesResult.ok) console.warn('Payables email failed:', payablesResult.error);
       } catch (err) {

@@ -61,6 +61,7 @@ function rowToDocument(row: any): Document {
     category: row.category || undefined,
     categoryOtherDescription: row.category_other_description || undefined,
     expenseExplanation: row.expense_explanation || undefined,
+    cardType: row.card_type || undefined,
     batchSentAt: row.batch_sent_at ? new Date(row.batch_sent_at) : undefined,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -85,7 +86,7 @@ export async function getPersonneByEmail(email: string): Promise<Personne | null
   return personnes.find(p => p.email === email) || null;
 }
 
-export async function createDocument(data: { type: 'invoice' | 'visa'; fileName: string; approuveurId: string; volet: 1 | 2; visaCode?: string; pdfUrl?: string; submittedByName?: string; submittedByEmail?: string; amount?: number; amountTps?: number; amountTvq?: number; category?: string; categoryOtherDescription?: string; expenseExplanation?: string }): Promise<Document> {
+export async function createDocument(data: { type: 'invoice' | 'visa'; fileName: string; approuveurId: string; volet: 1 | 2; visaCode?: string; pdfUrl?: string; submittedByName?: string; submittedByEmail?: string; amount?: number; amountTps?: number; amountTvq?: number; category?: string; categoryOtherDescription?: string; expenseExplanation?: string; cardType?: 'company' | 'personal' }): Promise<Document> {
   const now = new Date();
   const visaRouting = data.visaCode ? routageVisa[data.visaCode as keyof typeof routageVisa] : null;
   const stampsApplied: string[] = [];
@@ -102,7 +103,7 @@ export async function createDocument(data: { type: 'invoice' | 'visa'; fileName:
   }
 
   const stampsLiteral = '{' + stampsApplied.join(',') + '}';
-  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, submitted_by_name, submitted_by_email, amount, amount_tps, amount_tvq, category, category_other_description, expense_explanation, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${data.pdfUrl || null}, ${stampsLiteral}::text[], ${data.submittedByName || null}, ${data.submittedByEmail || null}, ${data.amount ?? null}, ${data.amountTps ?? null}, ${data.amountTvq ?? null}, ${data.category || null}, ${data.categoryOtherDescription || null}, ${data.expenseExplanation || null}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
+  const result = await db`INSERT INTO documents (type, file_name, volet, status, approuveur_id, visa_code, pdf_url, stamps_applied, submitted_by_name, submitted_by_email, amount, amount_tps, amount_tvq, category, category_other_description, expense_explanation, card_type, created_at, updated_at, approved_at) VALUES (${data.type}, ${data.fileName}, ${data.volet}, ${status}, ${data.approuveurId}, ${data.visaCode || null}, ${data.pdfUrl || null}, ${stampsLiteral}::text[], ${data.submittedByName || null}, ${data.submittedByEmail || null}, ${data.amount ?? null}, ${data.amountTps ?? null}, ${data.amountTvq ?? null}, ${data.category || null}, ${data.categoryOtherDescription || null}, ${data.expenseExplanation || null}, ${data.cardType || 'company'}, ${now}, ${now}, ${approvedAt || null}) RETURNING *`;
   return rowToDocument(result[0]);
 }
 
